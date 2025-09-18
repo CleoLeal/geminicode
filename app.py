@@ -10,7 +10,7 @@ import plotly.graph_objects as go  # Usamos go para múltiplas linhas
 # --------------------------
 # 1️⃣ Modelo Random Forest (igual antes)
 # --------------------------
-df = pd.read_excel("./dataset/dataset_velocidade.xlsx")
+df = pd.read_excel("dataset/dataset_velocidade.xlsx")
 
 le_mov = LabelEncoder()
 df['movimento'] = le_mov.fit_transform(df['movimento'])
