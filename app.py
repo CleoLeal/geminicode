@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+import math
 from sklearn.model_selection import train_test_split
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
@@ -28,7 +29,7 @@ X = df[['movimento', 'tempo', 'velocidade']]
 y = df['target']
 
 # Colunas categóricas e numéricas
-cat_features = ['movimento']        # movimento como categórico
+cat_features = ['movimento']
 num_features = ['tempo', 'velocidade']
 
 # Pré-processamento
@@ -65,7 +66,7 @@ app.layout = html.Div([
 ])
 
 # --------------------------
-# 3️⃣ Callback para gráfico com linha fixa + resultados
+# 3️⃣ Callback para gráfico com linha fixa + resultados coloridos
 # --------------------------
 @app.callback(
     Output('grafico_velocidade', 'figure'),
@@ -74,19 +75,37 @@ app.layout = html.Div([
 def atualizar_grafico(n):
     global dados_reais
     
-    # Gerar valores aleatórios
-    velocidade = round(random.uniform(0.067, 0.116), 4)   # float
-    tempo = round(random.uniform(1.0, 1.5), 3)           # float
-    movimento = str(random.choice([0, 1]))               # string, consistente com o dataset
+    # Probabilidade de gerar anomalia
+    prob_anomalia = 0.05  # 10% das vezes
     
-    # Montar DataFrame para predição
+    # Se gerar anomalia, escolhe um valor fora do limite
+    if random.random() < prob_anomalia:
+        # 50% abaixo, 50% acima do limite
+        if random.random() < 0.5:
+            velocidade = round(random.uniform(0.06, limite_inferior - 0.001), 4)
+        else:
+            velocidade = round(random.uniform(limite_superior + 0.001, 0.12), 4)
+    else:
+        # Valor normal próximo de 0.08 com pequenas variações
+        amplitude = 0.002
+        ruido_max = 0.001
+        if len(dados_reais) == 0:
+            velocidade = ideal
+        else:
+            ultimo = dados_reais['velocidade'].iloc[-1]
+            velocidade = round(ideal + amplitude * math.sin(n*0.1) + random.uniform(-ruido_max, ruido_max), 4)
+            velocidade = max(limite_inferior, min(limite_superior, velocidade))
+    
+    # Dados de predição
+    tempo = round(random.uniform(1.0, 1.5), 3)
+    movimento = str(random.choice([0, 1]))
+    
     novo_dado = pd.DataFrame({
         'movimento': [movimento],
         'tempo': [tempo],
         'velocidade': [velocidade]
     })
     
-    # Predição
     pred = pipeline.predict(novo_dado)
     status = "Anomalia" if pred[0]==1 else "Normal"
     
@@ -99,7 +118,6 @@ def atualizar_grafico(n):
     # Criar gráfico
     fig = go.Figure()
     
-    # Linha fixa de referência
     fig.add_trace(go.Scatter(
         y=[ideal]*len(dados_reais),
         mode='lines',
@@ -107,13 +125,27 @@ def atualizar_grafico(n):
         line=dict(color='green', dash='dash')
     ))
     
-    # Linha de resultados do teste
-    fig.add_trace(go.Scatter(
-        y=dados_reais['velocidade'],
-        mode='lines+markers',
-        name='Velocidade Real',
-        line=dict(color='blue')
-    ))
+    # Separar por status
+    normais = dados_reais[dados_reais['status']=="Normal"]
+    anomalias = dados_reais[dados_reais['status']=="Anomalia"]
+    
+    if len(normais) > 0:
+        fig.add_trace(go.Scatter(
+            y=normais['velocidade'],
+            mode='lines+markers',
+            name='Normal',
+            line=dict(color='blue'),
+            marker=dict(color='blue')
+        ))
+    
+    if len(anomalias) > 0:
+        fig.add_trace(go.Scatter(
+            y=anomalias['velocidade'],
+            mode='lines+markers',
+            name='Anomalia',
+            line=dict(color='red'),
+            marker=dict(color='red')
+        ))
     
     fig.update_layout(
         title="Velocidade do Atuador - Real x Ideal",
