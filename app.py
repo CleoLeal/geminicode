@@ -1,32 +1,55 @@
 import pandas as pd
 import random
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
-import plotly.graph_objects as go  # Usamos go para múltiplas linhas
+import plotly.graph_objects as go
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
 
 # --------------------------
-# 1️⃣ Modelo Random Forest (igual antes)
+# 1️⃣ Modelo de Treinamento
 # --------------------------
-df = pd.read_excel("dataset/dataset_velocidade.xlsx")
+df = pd.read_excel("dataset/dataset_velocidade_v2.xlsx")
 
-le_mov = LabelEncoder()
-df['movimento'] = le_mov.fit_transform(df['movimento'])
+# Parâmetros da regra
+ideal = 0.08
+margem = 0.05
+limite_inferior = ideal * (1 - margem)
+limite_superior = ideal * (1 + margem)
 
-le_flag = LabelEncoder()
-df['flag_anomalia'] = le_flag.fit_transform(df['flag_anomalia'])
+# Criar target: 0 = normal, 1 = anomalia
+df['target'] = ((df['velocidade'] < limite_inferior) | (df['velocidade'] > limite_superior)).astype(int)
 
-X = df[['movimento','tempo_movimento','velocidade']]
-y = df['flag_anomalia']
+# Features e target
+X = df[['movimento', 'tempo', 'velocidade']]
+y = df['target']
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+# Colunas categóricas e numéricas
+cat_features = ['movimento']        # movimento como categórico
+num_features = ['tempo', 'velocidade']
+
+# Pré-processamento
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), num_features),
+        ('cat', OneHotEncoder(handle_unknown='ignore'), cat_features)
+    ]
 )
 
-clf = RandomForestClassifier(n_estimators=100, random_state=42)
-clf.fit(X_train, y_train)
+# Pipeline com Regressão Logística
+pipeline = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('classifier', LogisticRegression(random_state=42, max_iter=1000))
+])
+
+# Dividir dados em treino e teste
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Treinar modelo
+pipeline.fit(X_train, y_train)
 
 # --------------------------
 # 2️⃣ Dashboard
@@ -51,22 +74,34 @@ app.layout = html.Div([
 def atualizar_grafico(n):
     global dados_reais
     
-    # Gerar valor aleatório do teste
-    velocidade = round(random.uniform(0.067, 0.116), 4)
+    # Gerar valores aleatórios
+    velocidade = round(random.uniform(0.067, 0.116), 4)   # float
+    tempo = round(random.uniform(1.0, 1.5), 3)           # float
+    movimento = str(random.choice([0, 1]))               # string, consistente com o dataset
     
-    # Classificar
-    pred = clf.predict(pd.DataFrame({'movimento':[0],'tempo_movimento':[0.08],'velocidade':[velocidade]}))
+    # Montar DataFrame para predição
+    novo_dado = pd.DataFrame({
+        'movimento': [movimento],
+        'tempo': [tempo],
+        'velocidade': [velocidade]
+    })
+    
+    # Predição
+    pred = pipeline.predict(novo_dado)
     status = "Anomalia" if pred[0]==1 else "Normal"
     
     # Adicionar ao histórico
-    dados_reais = pd.concat([dados_reais, pd.DataFrame({'velocidade':[velocidade],'status':[status]})], ignore_index=True)
+    dados_reais = pd.concat(
+        [dados_reais, pd.DataFrame({'velocidade':[velocidade], 'status':[status]})],
+        ignore_index=True
+    )
     
     # Criar gráfico
     fig = go.Figure()
     
     # Linha fixa de referência
     fig.add_trace(go.Scatter(
-        y=[0.08]*len(dados_reais),
+        y=[ideal]*len(dados_reais),
         mode='lines',
         name='Velocidade Ideal',
         line=dict(color='green', dash='dash')
@@ -80,10 +115,12 @@ def atualizar_grafico(n):
         line=dict(color='blue')
     ))
     
-    fig.update_layout(title="Velocidade do Atuador - Real x Ideal",
-                      xaxis_title="Tempo (passos)",
-                      yaxis_title="Velocidade",
-                      yaxis=dict(range=[0, 0.12]))
+    fig.update_layout(
+        title="Velocidade do Atuador - Real x Ideal",
+        xaxis_title="Tempo (passos)",
+        yaxis_title="Velocidade",
+        yaxis=dict(range=[0, 0.12])
+    )
     
     return fig
 
