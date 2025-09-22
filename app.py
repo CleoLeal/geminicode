@@ -14,16 +14,23 @@ import plotly.graph_objects as go
 # --------------------------
 df = pd.read_excel("dataset/dataset_velocidade_v2.xlsx")
 
-# Extrair prefixo da velocidade
-df['vel_prefixo'] = df['velocidade'].apply(lambda x: float(str(round(x, 5))[:4]))
-
 # Codificar movimento
 le = LabelEncoder()
 df['movimento_num'] = le.fit_transform(df['movimento'])
 
+# Definir flag considerando margem de erro de 5%
+ideal = 0.08
+margem = 0.05
+limite_inferior = ideal * (1 - margem)
+limite_superior = ideal * (1 + margem)
+
+df['flag_margem'] = df['velocidade'].apply(
+    lambda x: 1 if limite_inferior <= x <= limite_superior else 0
+)
+
 # Features e target
-X = df[['vel_prefixo', 'movimento_num']]
-y = df['flag']  # 1 = normal, 0 = anomalia
+X = df[['velocidade', 'movimento_num']]
+y = df['flag_margem']  # 1 = normal, 0 = anomalia
 
 # Dividir treino/teste
 X_train, X_test, y_train, y_test = train_test_split(
@@ -39,11 +46,6 @@ model.fit(X_train, y_train)
 # --------------------------
 app = Dash(__name__)
 dados_reais = pd.DataFrame(columns=['velocidade','status'])
-
-ideal = 0.08
-margem = 0.05
-limite_inferior = ideal * (1 - margem)
-limite_superior = ideal * (1 + margem)
 
 app.layout = html.Div([
     html.H1("Sistema Pneumático - Monitoramento em Tempo Real"),
@@ -84,10 +86,8 @@ def atualizar_grafico(n):
     movimento = random.choice(['avanco', 'recuo'])
     
     # Preparar dado para predição
-    vel_prefixo = float(str(round(velocidade,5))[:4])
     movimento_num = le.transform([movimento])[0]
-    
-    novo_dado = pd.DataFrame({'vel_prefixo':[vel_prefixo], 'movimento_num':[movimento_num]})
+    novo_dado = pd.DataFrame({'velocidade':[velocidade], 'movimento_num':[movimento_num]})
     
     # Predição Random Forest
     pred = model.predict(novo_dado)
