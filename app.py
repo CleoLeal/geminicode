@@ -4,53 +4,35 @@ import math
 from sklearn.model_selection import train_test_split
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
 import plotly.graph_objects as go
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
 
 # --------------------------
-# 1️⃣ Modelo de Treinamento
+# 1️⃣ Modelo de Treinamento (Random Forest)
 # --------------------------
 df = pd.read_excel("dataset/dataset_velocidade_v2.xlsx")
 
-# Parâmetros da regra
-ideal = 0.08
-margem = 0.05
-limite_inferior = ideal * (1 - margem)
-limite_superior = ideal * (1 + margem)
+# Extrair prefixo da velocidade
+df['vel_prefixo'] = df['velocidade'].apply(lambda x: float(str(round(x, 5))[:4]))
 
-# Criar target: 0 = normal, 1 = anomalia
-df['target'] = ((df['velocidade'] < limite_inferior) | (df['velocidade'] > limite_superior)).astype(int)
+# Codificar movimento
+le = LabelEncoder()
+df['movimento_num'] = le.fit_transform(df['movimento'])
 
 # Features e target
-X = df[['movimento', 'tempo', 'velocidade']]
-y = df['target']
+X = df[['vel_prefixo', 'movimento_num']]
+y = df['flag']  # 1 = normal, 0 = anomalia
 
-# Colunas categóricas e numéricas
-cat_features = ['movimento']
-num_features = ['tempo', 'velocidade']
-
-# Pré-processamento
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('num', StandardScaler(), num_features),
-        ('cat', OneHotEncoder(handle_unknown='ignore'), cat_features)
-    ]
+# Dividir treino/teste
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# Pipeline com Regressão Logística
-pipeline = Pipeline(steps=[
-    ('preprocessor', preprocessor),
-    ('classifier', LogisticRegression(random_state=42, max_iter=1000))
-])
-
-# Dividir dados em treino e teste
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Treinar modelo
-pipeline.fit(X_train, y_train)
+# Treinar Random Forest
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
 
 # --------------------------
 # 2️⃣ Dashboard
@@ -58,9 +40,13 @@ pipeline.fit(X_train, y_train)
 app = Dash(__name__)
 dados_reais = pd.DataFrame(columns=['velocidade','status'])
 
+ideal = 0.08
+margem = 0.05
+limite_inferior = ideal * (1 - margem)
+limite_superior = ideal * (1 + margem)
+
 app.layout = html.Div([
     html.H1("Sistema Pneumático - Monitoramento em Tempo Real"),
-    
     dcc.Graph(id='grafico_velocidade'),
     dcc.Interval(id='intervalo-atualizacao', interval=1000, n_intervals=0)
 ])
@@ -76,17 +62,15 @@ def atualizar_grafico(n):
     global dados_reais
     
     # Probabilidade de gerar anomalia
-    prob_anomalia = 0.05  # 10% das vezes
+    prob_anomalia = 0.05
     
-    # Se gerar anomalia, escolhe um valor fora do limite
+    # Gerar velocidade
     if random.random() < prob_anomalia:
-        # 50% abaixo, 50% acima do limite
         if random.random() < 0.5:
             velocidade = round(random.uniform(0.06, limite_inferior - 0.001), 4)
         else:
             velocidade = round(random.uniform(limite_superior + 0.001, 0.12), 4)
     else:
-        # Valor normal próximo de 0.08 com pequenas variações
         amplitude = 0.002
         ruido_max = 0.001
         if len(dados_reais) == 0:
@@ -96,18 +80,18 @@ def atualizar_grafico(n):
             velocidade = round(ideal + amplitude * math.sin(n*0.1) + random.uniform(-ruido_max, ruido_max), 4)
             velocidade = max(limite_inferior, min(limite_superior, velocidade))
     
-    # Dados de predição
-    tempo = round(random.uniform(1.0, 1.5), 3)
-    movimento = str(random.choice([0, 1]))
+    # Gerar movimento aleatório
+    movimento = random.choice(['avanco', 'recuo'])
     
-    novo_dado = pd.DataFrame({
-        'movimento': [movimento],
-        'tempo': [tempo],
-        'velocidade': [velocidade]
-    })
+    # Preparar dado para predição
+    vel_prefixo = float(str(round(velocidade,5))[:4])
+    movimento_num = le.transform([movimento])[0]
     
-    pred = pipeline.predict(novo_dado)
-    status = "Anomalia" if pred[0]==1 else "Normal"
+    novo_dado = pd.DataFrame({'vel_prefixo':[vel_prefixo], 'movimento_num':[movimento_num]})
+    
+    # Predição Random Forest
+    pred = model.predict(novo_dado)
+    status = "Normal" if pred[0]==1 else "Anomalia"
     
     # Adicionar ao histórico
     dados_reais = pd.concat(
@@ -117,7 +101,6 @@ def atualizar_grafico(n):
     
     # Criar gráfico
     fig = go.Figure()
-    
     fig.add_trace(go.Scatter(
         y=[ideal]*len(dados_reais),
         mode='lines',
@@ -125,7 +108,6 @@ def atualizar_grafico(n):
         line=dict(color='green', dash='dash')
     ))
     
-    # Separar por status
     normais = dados_reais[dados_reais['status']=="Normal"]
     anomalias = dados_reais[dados_reais['status']=="Anomalia"]
     
