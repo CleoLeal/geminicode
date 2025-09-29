@@ -85,7 +85,7 @@ def gerar_dado(i):
 # --------------------------
 # Abas
 # --------------------------
-tab1, tab2, tab3 = st.tabs(["📈 Tempo Real", "📊 Estatísticas", "📄 Sobre"])
+tab1, tab2, tab3 = st.tabs(["Tempo Real", "Estatísticas", "GeminiCode"])
 
 # --------------------------
 # 📈 Aba 1 — Tempo Real
@@ -96,7 +96,7 @@ with tab1:
     col1, col2, col3 = st.columns([1, 1, 1])
     iniciar = col1.button("▶️ Iniciar Simulação")
     parar = col2.button("⏹️ Parar Simulação")
-    resetar = col3.button("♻️ Resetar Histórico")
+    resetar = col3.button("Resetar Histórico")
 
     if iniciar:
         st.session_state.rodando = True
@@ -294,26 +294,128 @@ with tab2:
 # --------------------------
 # 📄 Aba 3 — Sobre
 # --------------------------
+import streamlit as st
+import base64
+import streamlit.components.v1 as components
+
 with tab3:
-    st.header("Relatório Complementar (Vídeo)")
+    st.header("Projeto GeminiCode — Relatório Complementar")
 
-    video_path = "C:/Users/Cleo Leal/Downloads/geminicode-main/video/VideoAtuador.mp4"
+    # --- HTML com layout moderno ---
+    html_content = """
+<style>
+        .section {
+            margin-bottom: 50px;
+        }
+        .section h2 {
+            color: #1E90FF;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+        .section p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+        .card {
+            background: #2c2f38;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+        }
+        a {
+            color: #00CED1;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+</style>
 
-    with open(video_path, "rb") as f:
-        video_bytes = f.read()
+<div class="section">
+<h2>Contexto do Projeto</h2>
+<div class="card">
+<p>
+Este projeto foi desenvolvido no âmbito da <b>Festo Innovation Challenge CUP 2025</b>, 
+uma iniciativa em parceria entre a <b>FIAP</b> e a <b>Festo</b>, com o objetivo de criar soluções 
+tecnológicas inovadoras voltadas ao <b>desenvolvimento de Digital Twins para monitoramento 
+de sistemas pneumáticos</b>.
+</p>
+<p>
+Nossa equipe criou um <b>gêmeo digital</b> para monitoramento de atuadores pneumáticos em tempo real, 
+permitindo identificar anomalias, prever falhas e otimizar o uso de componentes.
+</p>
+</div>
+</div>
 
-    video_base64 = base64.b64encode(video_bytes).decode("utf-8")
-
-    video_html = f"""
-    <video id="meuVideo" width="800" height="450" controls autoplay loop muted>
-      <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
-      Seu navegador não suporta HTML5 video.
-    </video>
-
-    <script>
-      var vid = document.getElementById('meuVideo');
-      vid.playbackRate = 0.8;
-    </script>
+<div class="section">
+<h2>Demonstração do Protótipo</h2>
+<video width="400" height="250" controls autoplay loop muted>
+<source src="data:video/mp4;base64,VIDEO_BASE64" type="video/mp4">
+Seu navegador não suporta vídeo.
+</video>
+</div>
     """
 
-    components.html(video_html, height=520)
+    # substitui VIDEO_BASE64 pelo vídeo real
+    video_path = "C:/Users/Cleo Leal/Downloads/geminicode-main/video/VideoAtuador.mp4"
+    with open(video_path, "rb") as f:
+        video_bytes = f.read()
+    video_base64 = base64.b64encode(video_bytes).decode("utf-8")
+
+    final_html = html_content.replace("VIDEO_BASE64", video_base64)
+    components.html(final_html, height=700, scrolling=True)
+
+    # --- Componentes Utilizados ---
+    st.subheader("Componentes Utilizados")
+
+    # Atuador Normalizado
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        html_path = "./html/AtuadorNormalizado.html"
+        with open(html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        components.html(html_content, height=400, scrolling=False)
+    with col2:
+        st.markdown("""
+        ### Atuador Normalizado — DSNU-20-100-PPV-A  
+        Cilindro pneumático de alta precisão utilizado para realizar o movimento linear.  
+        É o principal componente físico monitorado pelo gêmeo digital.  
+        [Mais detalhes](https://www.festo.com/br/pt/a/19239/?q=dsnu%7E%3AsortByCoreRangeAndNewProduct)
+        """)
+
+    st.markdown("---")
+
+    # Sensor de Proximidade
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        html_path = "./html/SensorProximidade.html"
+        with open(html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        components.html(html_content, height=400, scrolling=False)
+    with col2:
+        st.markdown("""
+        ### Sensor de Proximidade — SME-8M-DS-24V-K-2,5-OE  
+        Detecta a posição do êmbolo no interior do atuador, fornecendo feedback contínuo sobre o deslocamento.  
+        Esses dados alimentam os algoritmos de **Machine Learning**, que distinguem estados normais e anômalos.  
+        [Mais detalhes](https://www.festo.com/br/pt/a/543862/?q=SME+8M%7E%3AsortByCoreRangeAndNewProduct)
+        """)
+
+    st.markdown("---")
+
+    # Válvula Solenoide
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        html_path = "./html/ValvulaSolenoide.html"
+        with open(html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        components.html(html_content, height=400, scrolling=False)
+    with col2:
+        st.markdown("""
+        ### Válvula Solenoide — VUVG-L10-B52-T-M5-1P3  
+        Responsável pelo controle preciso do fluxo de ar comprimido que aciona o atuador.  
+        Seu papel é garantir que os movimentos sejam realizados com exatidão, integrando-se ao sistema de monitoramento digital.  
+        [Mais detalhes](https://www.festo.com/br/pt/a/566458/?q=VUVG+L10+B52+T+M5+1P3%7E%3AfestoSortOrderScored)
+        """)
