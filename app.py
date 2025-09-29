@@ -12,7 +12,6 @@ from datetime import datetime
 import streamlit.components.v1 as components
 import math
 import base64
-import streamlit.components.v1 as components
 
 # --------------------------
 # Configuração inicial
@@ -57,7 +56,6 @@ if "aba_ativa" not in st.session_state:
 def gerar_dado(i):
     prob_anomalia = 0.1
     if random.random() < prob_anomalia:
-        # Força ponto fora da faixa 
         if random.random() < 0.5:
             velocidade = round(random.uniform(0.06, limite_inferior - 0.001), 4)
         else:
@@ -106,16 +104,15 @@ with tab1:
 
     if parar:
         st.session_state.rodando = False
-        st.session_state.aba_ativa = "estatisticas"  # troca automática para estatísticas
+        st.session_state.aba_ativa = "estatisticas"
 
     if resetar:
         st.session_state.dados_reais = pd.DataFrame(columns=["timestamp", "velocidade", "status"])
 
     placeholder = st.empty()
 
-    # Loop contínuo enquanto rodando
     if st.session_state.rodando:
-        for i in range(1000000):  # número alto só para segurar o loop
+        for i in range(1000000):
             if not st.session_state.rodando:
                 break
 
@@ -129,7 +126,7 @@ with tab1:
 
             fig = go.Figure()
 
-            # Linha roxa arredondada (sem legenda)
+            # Linha roxa arredondada
             fig.add_trace(go.Scatter(
                 x=dados_plot["timestamp"],
                 y=dados_plot["velocidade"],
@@ -138,22 +135,22 @@ with tab1:
                 showlegend=False
             ))
 
-            # Bolinhas verdes (Normal)
+            # Bolinhas Normal (azul)
             fig.add_trace(go.Scatter(
                 x=dados_plot[dados_plot["status"] == "Normal"]["timestamp"],
                 y=dados_plot[dados_plot["status"] == "Normal"]["velocidade"],
                 mode="markers",
-                marker=dict(color="green", size=10),
-                name="Normal"  # legenda
+                marker=dict(color="#1E90FF", size=10),
+                name="Normal"
             ))
 
-            # Bolinhas vermelhas (Anômalo)
+            # Bolinhas Anômalo (turquesa)
             fig.add_trace(go.Scatter(
                 x=dados_plot[dados_plot["status"] == "Anômalo"]["timestamp"],
                 y=dados_plot[dados_plot["status"] == "Anômalo"]["velocidade"],
                 mode="markers",
-                marker=dict(color="red", size=10),
-                name="Anômalo"  # legenda
+                marker=dict(color="#00CED1", size=10),
+                name="Anômalo"
             ))
 
             # Linhas de referência
@@ -161,13 +158,11 @@ with tab1:
             fig.add_hline(y=ideal, line=dict(color="black", dash="dot"))
             fig.add_hline(y=limite_superior, line=dict(color="gray", dash="dash"))
 
-            # Layout
             fig.update_layout(
                 title="Últimos 30 Registros",
                 xaxis_title="Tempo",
                 yaxis_title="Velocidade"
             )
-
 
             total = len(st.session_state.dados_reais)
             anomalias = (st.session_state.dados_reais['status'] == "Anômalo").sum()
@@ -182,7 +177,6 @@ with tab1:
 
             time.sleep(0.8)
 
-    # Se parou, mostra gráfico estático
     elif not st.session_state.dados_reais.empty:
         dados_plot = st.session_state.dados_reais.tail(30)
         fig = go.Figure()
@@ -192,7 +186,7 @@ with tab1:
             mode="lines",
             line=dict(color="royalblue"),
         ))
-        color_map = dados_plot["status"].map({"Normal": "green", "Anômalo": "red"}).tolist()
+        color_map = dados_plot["status"].map({"Normal": "#1E90FF", "Anômalo": "#00CED1"}).tolist()
         fig.add_trace(go.Scatter(
             x=dados_plot["timestamp"],
             y=dados_plot["velocidade"],
@@ -207,8 +201,6 @@ with tab1:
 # --------------------------
 # 📊 Aba 2 — Estatísticas
 # --------------------------
-# 📊 Aba 2 — Estatísticas
-# 📊 Aba 2 — Estatísticas
 with tab2:
     st.header("Estatísticas Acumuladas")
 
@@ -222,7 +214,6 @@ with tab2:
         pct_normais = (normais / total) * 100 if total > 0 else 0
         pct_anomalias = (anomalias / total) * 100 if total > 0 else 0
 
-        # CSS para padronizar cards
         st.markdown("""
         <style>
         .card {
@@ -252,14 +243,14 @@ with tab2:
         col1.markdown(f"""
         <div class="card">
             <h4>Média Velocidade</h4>
-            <h2 style="color:#66BB6A;">{media:.4f}</h2>
+            <h2 style="color:#1E90FF;">{media:.4f}</h2>
         </div>
         """, unsafe_allow_html=True)
 
         col2.markdown(f"""
         <div class="card">
             <h4>Desvio Padrão</h4>
-            <h2 style="color:#FFB74D;">{desvio:.4f}</h2>
+            <h2 style="color:#00CED1;">{desvio:.4f}</h2>
         </div>
         """, unsafe_allow_html=True)
 
@@ -273,35 +264,32 @@ with tab2:
         col4.markdown(f"""
         <div class="card">
             <h4>Percentual Normais</h4>
-            <h2 style="color:#66BB6A;">{pct_normais:.1f}%</h2>
+            <h2 style="color:#1E90FF;">{pct_normais:.1f}%</h2>
         </div>
         """, unsafe_allow_html=True)
 
         col5.markdown(f"""
         <div class="card">
             <h4>Percentual Anômalos</h4>
-            <h2 style="color:#EF5350;">{pct_anomalias:.1f}%</h2>
+            <h2 style="color:#00CED1;">{pct_anomalias:.1f}%</h2>
         </div>
         """, unsafe_allow_html=True)
 
-        # Gráficos
         st.subheader("Distribuição das Velocidades")
         hist = px.histogram(
             dados, x="velocidade", color="status", nbins=20,
-            barmode="overlay", color_discrete_map={"Normal": "green", "Anômalo": "red"}
+            barmode="overlay", color_discrete_map={"Normal": "#1E90FF", "Anômalo": "#00CED1"}
         )
         st.plotly_chart(hist, use_container_width=True)
 
         st.subheader("Proporção de Status")
         pie = px.pie(
             dados, names="status", hole=0.4,
-            color="status", color_discrete_map={"Normal": "green", "Anômalo": "red"}
+            color="status", color_discrete_map={"Normal": "#1E90FF", "Anômalo": "#00CED1"}
         )
         st.plotly_chart(pie, use_container_width=True)
     else:
         st.info("Nenhum dado registrado ainda. Inicie a simulação na aba Tempo Real.")
-
-
 
 # --------------------------
 # 📄 Aba 3 — Sobre
@@ -324,7 +312,7 @@ with tab3:
 
     <script>
       var vid = document.getElementById('meuVideo');
-      vid.playbackRate = 0.8; // ajuste a velocidade aqui
+      vid.playbackRate = 0.8;
     </script>
     """
 
