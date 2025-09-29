@@ -1,336 +1,331 @@
+import streamlit as st
 import pandas as pd
+import numpy as np
 import random
-import math
+import time
 from sklearn.model_selection import train_test_split
-from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
-import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 from datetime import datetime
-import dash_daq as daq
-from collections import deque
+import streamlit.components.v1 as components
+import math
+import base64
+import streamlit.components.v1 as components
 
 # --------------------------
-# 1️⃣ Modelo de Treinamento com margem
+# Configuração inicial
 # --------------------------
+st.set_page_config(page_title="Dashboard de Monitoramento", layout="wide")
+
+# Dataset base
 df = pd.read_excel("./dataset/dataset_velocidade_v2.xlsx")
+df['movimento'] = df['movimento'].astype(str)
 
-# Codificar movimento
-le = LabelEncoder()
-df['movimento_num'] = le.fit_transform(df['movimento'])
-
-# Definir flag considerando margem de erro de 5%
+# Parâmetros fixos
 ideal = 0.08
 margem = 0.05
 limite_inferior = ideal * (1 - margem)
 limite_superior = ideal * (1 + margem)
 
-df['flag_margem'] = df['velocidade'].apply(
-    lambda x: 1 if limite_inferior <= x <= limite_superior else 0
-)
+# Criar flag (1 = Normal, 0 = Anômalo)
+df['flag_margem'] = df['velocidade'].between(limite_inferior, limite_superior).astype(int)
 
-# Features e target
+# Treinar modelo
+le = LabelEncoder()
+df['movimento_num'] = le.fit_transform(df['movimento'])
 X = df[['velocidade', 'movimento_num']]
-y = df['flag_margem']  # 1 = normal, 0 = anomalia
-
-# Dividir treino/teste
+y = df['flag_margem']
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
-
-# Treinar Random Forest
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# --------------------------
-# 2️⃣ Dashboard
-# --------------------------
-app = Dash(__name__)
-
-app.index_string = '''
-<!DOCTYPE html>
-<html>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
-        <!-- Google Fonts: Poppins -->
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>
-'''
-
-# Armazenamento em tempo real
-dados_reais = pd.DataFrame(columns=['timestamp', 'velocidade', 'status', 'anomalia'])
-
-estatisticas = {
-    "total_anomalias": 0,
-    "tempo_normal": 0,
-    "tempo_anomalo": 0,
-    "velocidades": deque(maxlen=1000)
-}
-
-# Layout
-app.layout = html.Div(
-    style={
-        "backgroundColor": "#ffffff",
-        "color": "#000000",
-        "font-family": "Poppins, Exo",
-        "padding": "20px"
-    },
-    children=[
-        html.H1("Monitoramento do Atuador", style={"textAlign": "center", "color": "#A020F0"}),
-
-        dcc.Interval(
-            id="intervalo",
-            interval=1000,  # 1 segundo
-            n_intervals=0
-        ),
-
-        html.Div([
-            html.Label("Filtrar últimos minutos:", style={"marginRight": "10px"}),
-            dcc.Dropdown(
-                id="filtro-tempo",
-                options=[
-                    {"label": "1 min", "value": 1},
-                    {"label": "5 min", "value": 5},
-                    {"label": "10 min", "value": 10},
-                    {"label": "Todos", "value": "all"}
-                ],
-                value="all",
-                clearable=False,
-                style={"width": "200px", "color": "#000"}
-            ),
-            daq.ToggleSwitch(
-                id="toggle-pausa",
-                label="Pausar Atualização",
-                labelPosition="top",
-                value=False,
-                style={"marginLeft": "20px"}
-            )
-        ], style={"display": "flex", "alignItems": "center", "marginBottom": "30px"}),
-
-        # ---------- Linha 1: Gráfico de Linha + Indicadores + Pizza ----------
-        html.Div([
-            # Gráfico de linha (lado esquerdo)
-            dcc.Graph(id="grafico-linha", style={
-                "flex": "3",
-                "marginRight": "10px",
-                "backgroundColor": "#1A1A1A",
-                "borderRadius": "15px",
-                "padding": "10px",
-                "height": "100%"   # 👈 ocupa a altura da linha inteira
-            }),
-
-            # Coluna da direita (cards + gráfico de pizza)
-            html.Div([
-                # Cards lado a lado
-                html.Div(id="cards-estatisticas", style={
-                    "display": "flex",
-                    "justifyContent": "space-between",
-                    "marginBottom": "10px",
-                    "gap": "10px",
-                    "color": "#F5F5F5"  
-                }),
-
-                # Gráfico de pizza
-                dcc.Graph(id="grafico-pizza", style={
-                    "backgroundColor": "#1A1A1A",
-                    "borderRadius": "15px",
-                    "padding": "10px",
-                    "flex": "1"  # garante que o pizza preencha
-                })
-            ], style={
-                "flex": "1",
-                "display": "flex",
-                "flexDirection": "column",
-                "height": "100%"   # 👈 mesma altura da linha
-            })
-        ], style={
-            "display": "flex",
-            "marginBottom": "15px",
-            "alignItems": "stretch"  # 👈 força as colunas a terem mesma altura
-        }),
-
-        # ---------- Linha 2: Histograma ----------
-        html.Div([
-            dcc.Graph(id="grafico-histograma", style={
-                "backgroundColor": "#1A1A1A",
-                "borderRadius": "15px",
-                "padding": "10px",
-                "width": "100%"
-            })
-        ])
-    ]
-)
-
-
+# Sessão
+if "dados_reais" not in st.session_state:
+    st.session_state.dados_reais = pd.DataFrame(columns=["timestamp", "velocidade", "status"])
+if "rodando" not in st.session_state:
+    st.session_state.rodando = False
+if "aba_ativa" not in st.session_state:
+    st.session_state.aba_ativa = "tempo_real"
 
 # --------------------------
-# 3️⃣ Atualização em tempo real
+# Funções auxiliares
 # --------------------------
-@app.callback(
-    [Output("grafico-linha", "figure"),
-     Output("grafico-pizza", "figure"),
-     Output("grafico-histograma", "figure"),
-     Output("cards-estatisticas", "children")],
-    [Input("intervalo", "n_intervals"),
-     Input("filtro-tempo", "value"),
-     Input("toggle-pausa", "value")]
-)
-def atualizar_dashboard(n, filtro_minutos, pausado):
-    global dados_reais, estatisticas
-    
-    if not pausado:
-        # -------- Gerar novo valor simulado --------
-        prob_anomalia = 0.05
-        if random.random() < prob_anomalia:
-            # Gera fora da faixa
-            if random.random() < 0.5:
-                velocidade = round(random.uniform(0.06, limite_inferior - 0.001), 4)
-            else:
-                velocidade = round(random.uniform(limite_superior + 0.001, 0.12), 4)
+def gerar_dado(i):
+    prob_anomalia = 0.1
+    if random.random() < prob_anomalia:
+        # Força ponto fora da faixa 
+        if random.random() < 0.5:
+            velocidade = round(random.uniform(0.06, limite_inferior - 0.001), 4)
         else:
-            # Gera em torno do ideal com ruído + seno
-            amplitude = 0.002
-            ruido_max = 0.001
-            if len(dados_reais) == 0:
-                velocidade = ideal
-            else:
-                velocidade = round(
-                    ideal + amplitude * math.sin(n * 0.1) + random.uniform(-ruido_max, ruido_max), 4
-                )
-                velocidade = max(limite_inferior, min(limite_superior, velocidade))
-        
-        movimento = random.choice(['avanco', 'recuo'])
-        movimento_num = le.transform([movimento])[0]
-        novo_dado = pd.DataFrame({'velocidade':[velocidade], 'movimento_num':[movimento_num]})
-        
-        # -------- Classificação com modelo treinado --------
-        pred = model.predict(novo_dado)
-        anomalia = pred[0] == 0   # 0 = anomalia
-        status = "Anomalia" if anomalia else "Normal"
-        
-        # -------- Adicionar ao histórico --------
-        timestamp = datetime.now()
-        novo_registro = pd.DataFrame({
-            'timestamp': [timestamp],
-            'velocidade': [velocidade],
-            'status': [status],
-            'anomalia': [anomalia]
-        })
-        dados_reais = pd.concat([dados_reais, novo_registro], ignore_index=True)
-        
-        # Atualizar estatísticas
-        if anomalia:
-            estatisticas['total_anomalias'] += 1
-            estatisticas['tempo_anomalo'] += 1
-        else:
-            estatisticas['tempo_normal'] += 1
-        
-        estatisticas['velocidades'].append(velocidade)
-
-    # Filtrar dados
-    if filtro_minutos != "all":
-        limite_tempo = datetime.now() - pd.Timedelta(minutes=filtro_minutos)
-        dados_filtrados = dados_reais[dados_reais['timestamp'] >= limite_tempo]
+            velocidade = round(random.uniform(limite_superior + 0.001, 0.12), 4)
     else:
-        dados_filtrados = dados_reais
+        amplitude = 0.002
+        ruido_max = 0.001
+        if len(st.session_state.dados_reais) == 0:
+            velocidade = ideal
+        else:
+            velocidade = round(
+                ideal + amplitude * math.sin(i * 0.1) + random.uniform(-ruido_max, ruido_max), 4
+            )
+            velocidade = max(limite_inferior, min(limite_superior, velocidade))
 
-    # -------- Gráfico de Linha --------
-    fig_linha = go.Figure()
-    if not dados_filtrados.empty:
-        # Pegar apenas as últimas 35 amostras
-        dados_plot = dados_filtrados.tail(35)
+    movimento = random.choice(list(df['movimento'].unique()))
+    movimento_num = le.transform([movimento])[0]
+    pred = model.predict([[velocidade, movimento_num]])[0]
+    status = "Normal" if pred == 1 else "Anômalo"
 
-        fig_linha.add_trace(go.Scatter(
-            x=dados_plot['timestamp'],  
-            y=dados_plot['velocidade'],
-            mode="lines+markers",
-            line=dict(color="#A020F0"),
-            marker=dict(color=dados_plot['anomalia'].map({True: "red", False: "green"})),
-            name="Velocidade",
-            line_shape="spline"
-        ))
-
-    # 🔥 Definir altura fixa do gráfico
-    fig_linha.update_layout(
-        template="plotly_dark",
-        title="Velocidade em Tempo Real (Últimas 35 amostras)",
-        xaxis_title="Tempo",
-        yaxis_title="Velocidade",
-        height=628  # 👈 ajusta a altura do gráfico de linha
-    )
-
-    # -------- Gráfico de Pizza --------
-    fig_pizza = go.Figure(data=[go.Pie(
-        labels=["Normal", "Anomalia"],
-        values=[estatisticas['tempo_normal'], estatisticas['tempo_anomalo']],
-        hole=0.5,
-        marker=dict(colors=["#6A0DAD", "#FF4500"])
-    )])
-    fig_pizza.update_layout(
-    template="plotly_dark",
-    title="Distribuição de Status",
-    legend=dict(
-        orientation="v",   # legenda na horizontal
-        yanchor="bottom",
-        y=-0.2,            # joga a legenda para baixo do gráfico
-        xanchor="center",
-        x=0.5
-    )
-)
-
-    # -------- Histograma --------
-    fig_hist = go.Figure()
-    if estatisticas['velocidades']:
-        fig_hist.add_trace(go.Histogram(
-            x=list(estatisticas['velocidades']),
-            nbinsx=20,
-            marker_color="#A020F0"
-        ))
-    fig_hist.update_layout(template="plotly_dark", title="Distribuição de Velocidades", width=1470)
-
-    # -------- Cards --------
-    cards = [
-        html.Div([
-            html.H4("Total Anomalias", style={"textAlign": "center"}),
-            html.P(estatisticas['total_anomalias'], style={"fontSize": "24px", "color": "#FF4500", "textAlign": "center"})
-        ], style={
-            "padding": "20px",              # mais espaço interno
-            "backgroundColor": "#1A1A1A",
-            "borderRadius": "10px",
-            "flex": "1",                    # ocupa largura proporcional
-            "textAlign": "center"
-        }),
-
-        html.Div([
-            html.H4("Tempo Normal", style={"textAlign": "center"}),
-            html.P(estatisticas['tempo_normal'], style={"fontSize": "24px", "color": "#00FF7F", "textAlign": "center"})
-        ], style={
-            "padding": "20px",
-            "backgroundColor": "#1A1A1A",
-            "borderRadius": "10px",
-            "flex": "1",
-            "textAlign": "center"
-        }),
-    ]
-
-    return fig_linha, fig_pizza, fig_hist, cards
+    return {
+        "timestamp": datetime.now().strftime("%H:%M:%S"),
+        "velocidade": velocidade,
+        "status": status
+    }
 
 # --------------------------
-# 4️⃣ Executar app
+# Abas
 # --------------------------
-if __name__ == "__main__":
-    app.run(debug=True)
+tab1, tab2, tab3 = st.tabs(["📈 Tempo Real", "📊 Estatísticas", "📄 Sobre"])
+
+# --------------------------
+# 📈 Aba 1 — Tempo Real
+# --------------------------
+with tab1:
+    st.header("Monitoramento em Tempo Real")
+
+    col1, col2, col3 = st.columns([1, 1, 1])
+    iniciar = col1.button("▶️ Iniciar Simulação")
+    parar = col2.button("⏹️ Parar Simulação")
+    resetar = col3.button("♻️ Resetar Histórico")
+
+    if iniciar:
+        st.session_state.rodando = True
+        st.session_state.aba_ativa = "tempo_real"
+
+    if parar:
+        st.session_state.rodando = False
+        st.session_state.aba_ativa = "estatisticas"  # troca automática para estatísticas
+
+    if resetar:
+        st.session_state.dados_reais = pd.DataFrame(columns=["timestamp", "velocidade", "status"])
+
+    placeholder = st.empty()
+
+    # Loop contínuo enquanto rodando
+    if st.session_state.rodando:
+        for i in range(1000000):  # número alto só para segurar o loop
+            if not st.session_state.rodando:
+                break
+
+            novo = gerar_dado(i)
+            st.session_state.dados_reais = pd.concat(
+                [st.session_state.dados_reais, pd.DataFrame([novo])],
+                ignore_index=True
+            )
+
+            dados_plot = st.session_state.dados_reais.tail(30)
+
+            fig = go.Figure()
+
+            # Linha roxa arredondada (sem legenda)
+            fig.add_trace(go.Scatter(
+                x=dados_plot["timestamp"],
+                y=dados_plot["velocidade"],
+                mode="lines",
+                line=dict(shape="spline", smoothing=1.3, color="purple", width=3),
+                showlegend=False
+            ))
+
+            # Bolinhas verdes (Normal)
+            fig.add_trace(go.Scatter(
+                x=dados_plot[dados_plot["status"] == "Normal"]["timestamp"],
+                y=dados_plot[dados_plot["status"] == "Normal"]["velocidade"],
+                mode="markers",
+                marker=dict(color="green", size=10),
+                name="Normal"  # legenda
+            ))
+
+            # Bolinhas vermelhas (Anômalo)
+            fig.add_trace(go.Scatter(
+                x=dados_plot[dados_plot["status"] == "Anômalo"]["timestamp"],
+                y=dados_plot[dados_plot["status"] == "Anômalo"]["velocidade"],
+                mode="markers",
+                marker=dict(color="red", size=10),
+                name="Anômalo"  # legenda
+            ))
+
+            # Linhas de referência
+            fig.add_hline(y=limite_inferior, line=dict(color="gray", dash="dash"))
+            fig.add_hline(y=ideal, line=dict(color="black", dash="dot"))
+            fig.add_hline(y=limite_superior, line=dict(color="gray", dash="dash"))
+
+            # Layout
+            fig.update_layout(
+                title="Últimos 30 Registros",
+                xaxis_title="Tempo",
+                yaxis_title="Velocidade"
+            )
+
+
+            total = len(st.session_state.dados_reais)
+            anomalias = (st.session_state.dados_reais['status'] == "Anômalo").sum()
+            normais = (st.session_state.dados_reais['status'] == "Normal").sum()
+
+            with placeholder.container():
+                c1, c2 = st.columns([2, 1])
+                c1.plotly_chart(fig, use_container_width=True)
+                c2.metric("Total Registros", total)
+                c2.metric("Normais", normais)
+                c2.metric("Anomalias", anomalias)
+
+            time.sleep(0.8)
+
+    # Se parou, mostra gráfico estático
+    elif not st.session_state.dados_reais.empty:
+        dados_plot = st.session_state.dados_reais.tail(30)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=dados_plot["timestamp"],
+            y=dados_plot["velocidade"],
+            mode="lines",
+            line=dict(color="royalblue"),
+        ))
+        color_map = dados_plot["status"].map({"Normal": "green", "Anômalo": "red"}).tolist()
+        fig.add_trace(go.Scatter(
+            x=dados_plot["timestamp"],
+            y=dados_plot["velocidade"],
+            mode="markers",
+            marker=dict(color=color_map, size=10),
+        ))
+        fig.add_hline(y=limite_inferior, line=dict(color="gray", dash="dash"))
+        fig.add_hline(y=ideal, line=dict(color="black", dash="dot"))
+        fig.add_hline(y=limite_superior, line=dict(color="gray", dash="dash"))
+        placeholder.plotly_chart(fig, use_container_width=True)
+
+# --------------------------
+# 📊 Aba 2 — Estatísticas
+# --------------------------
+# 📊 Aba 2 — Estatísticas
+# 📊 Aba 2 — Estatísticas
+with tab2:
+    st.header("Estatísticas Acumuladas")
+
+    if len(st.session_state.dados_reais) > 0:
+        dados = st.session_state.dados_reais.copy()
+        media = dados['velocidade'].mean()
+        desvio = dados['velocidade'].std()
+        normais = (dados['status'] == "Normal").sum()
+        anomalias = (dados['status'] == "Anômalo").sum()
+        total = len(dados)
+        pct_normais = (normais / total) * 100 if total > 0 else 0
+        pct_anomalias = (anomalias / total) * 100 if total > 0 else 0
+
+        # CSS para padronizar cards
+        st.markdown("""
+        <style>
+        .card {
+            background: #2c2f38;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            height: 130px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .card h4 {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .card h2 {
+            font-size: 26px;
+            margin: 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        col1, col2, col3, col4, col5 = st.columns(5)
+
+        col1.markdown(f"""
+        <div class="card">
+            <h4>Média Velocidade</h4>
+            <h2 style="color:#66BB6A;">{media:.4f}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col2.markdown(f"""
+        <div class="card">
+            <h4>Desvio Padrão</h4>
+            <h2 style="color:#FFB74D;">{desvio:.4f}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col3.markdown(f"""
+        <div class="card">
+            <h4>Total Registros</h4>
+            <h2 style="color:#4FC3F7;">{total}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col4.markdown(f"""
+        <div class="card">
+            <h4>Percentual Normais</h4>
+            <h2 style="color:#66BB6A;">{pct_normais:.1f}%</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col5.markdown(f"""
+        <div class="card">
+            <h4>Percentual Anômalos</h4>
+            <h2 style="color:#EF5350;">{pct_anomalias:.1f}%</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Gráficos
+        st.subheader("Distribuição das Velocidades")
+        hist = px.histogram(
+            dados, x="velocidade", color="status", nbins=20,
+            barmode="overlay", color_discrete_map={"Normal": "green", "Anômalo": "red"}
+        )
+        st.plotly_chart(hist, use_container_width=True)
+
+        st.subheader("Proporção de Status")
+        pie = px.pie(
+            dados, names="status", hole=0.4,
+            color="status", color_discrete_map={"Normal": "green", "Anômalo": "red"}
+        )
+        st.plotly_chart(pie, use_container_width=True)
+    else:
+        st.info("Nenhum dado registrado ainda. Inicie a simulação na aba Tempo Real.")
+
+
+
+# --------------------------
+# 📄 Aba 3 — Sobre
+# --------------------------
+with tab3:
+    st.header("Relatório Complementar (Vídeo)")
+
+    video_path = "C:/Users/Cleo Leal/Downloads/geminicode-main/video/VideoAtuador.mp4"
+
+    with open(video_path, "rb") as f:
+        video_bytes = f.read()
+
+    video_base64 = base64.b64encode(video_bytes).decode("utf-8")
+
+    video_html = f"""
+    <video id="meuVideo" width="800" height="450" controls autoplay loop muted>
+      <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+      Seu navegador não suporta HTML5 video.
+    </video>
+
+    <script>
+      var vid = document.getElementById('meuVideo');
+      vid.playbackRate = 0.8; // ajuste a velocidade aqui
+    </script>
+    """
+
+    components.html(video_html, height=520)
