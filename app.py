@@ -299,123 +299,136 @@ import base64
 import streamlit.components.v1 as components
 
 with tab3:
-    st.header("Projeto GeminiCode — Relatório Complementar")
-
-    # --- HTML com layout moderno ---
-    html_content = """
+   st.header("Projeto GeminiCode — Relatório Complementar")
+   # --- HTML com layout moderno ---
+   html_content = """
 <style>
-        .section {
-            margin-bottom: 50px;
-        }
-        .section h2 {
-            color: #1E90FF;
-            margin-bottom: 15px;
-            font-size: 28px;
-        }
-        .section p {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #e0e0e0;
-        }
-        .card {
-            background: #2c2f38;
+       .section {
+           margin-bottom: 40px;
+       }
+       .section h2 {
+           color: #1E90FF;
+           margin-bottom: 12px;
+           font-size: 30px; /* títulos maiores */
+           font-weight: bold;
+       }
+       .section p {
+           font-size: 18px; /* texto maior */
+           line-height: 1.7;
+           color: #e0e0e0;
+       }
+       .card {
+           background: #2c2f38;
+           border-radius: 15px;
+           padding: 20px;
+           margin: 15px 0;
+           box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+       }
+       a {
+           color: #00CED1;
+           text-decoration: none;
+           font-weight: bold;
+       }
+       a:hover {
+           text-decoration: underline;
+       }
+       video {
+            width: 100%;
+            height: auto;  /* deixa a altura proporcional à largura */
+            max-height: 500px; /* limite máximo se quiser */
             border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
-        }
-        a {
-            color: #00CED1;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        a:hover {
-            text-decoration: underline;
         }
 </style>
-
 <div class="section">
 <h2>Contexto do Projeto</h2>
 <div class="card">
 <p>
-Este projeto foi desenvolvido no âmbito da <b>Festo Innovation Challenge CUP 2025</b>, 
-uma iniciativa em parceria entre a <b>FIAP</b> e a <b>Festo</b>, com o objetivo de criar soluções 
-tecnológicas inovadoras voltadas ao <b>desenvolvimento de Digital Twins para monitoramento 
+Este projeto foi desenvolvido no âmbito da <b>Festo Innovation Challenge CUP 2025</b>,
+uma iniciativa em parceria entre a <b>FIAP</b> e a <b>Festo</b>, com o objetivo de criar soluções
+tecnológicas inovadoras voltadas ao <b>desenvolvimento de Digital Twins para monitoramento
 de sistemas pneumáticos</b>.
 </p>
 <p>
-Nossa equipe criou um <b>gêmeo digital</b> para monitoramento de atuadores pneumáticos em tempo real, 
-permitindo identificar anomalias, prever falhas e otimizar o uso de componentes.
+A proposta buscou explorar o uso de <b>IoT, Inteligência Artificial, Machine Learning,
+Visão Computacional</b> e a integração com sensores e atuadores industriais.  
+O foco foi sempre em aplicações práticas, alinhadas à <b>Indústria 4.0</b> e
+à <b>eficiência energética</b>.
 </p>
 </div>
 </div>
-
 <div class="section">
 <h2>Demonstração do Protótipo</h2>
-<video width="400" height="250" controls autoplay loop muted>
+<video controls autoplay loop muted>
 <source src="data:video/mp4;base64,VIDEO_BASE64" type="video/mp4">
 Seu navegador não suporta vídeo.
 </video>
 </div>
-    """
-
-    # substitui VIDEO_BASE64 pelo vídeo real
-    video_path = "C:/Users/Cleo Leal/Downloads/geminicode-main/video/VideoAtuador.mp4"
-    with open(video_path, "rb") as f:
-        video_bytes = f.read()
-    video_base64 = base64.b64encode(video_bytes).decode("utf-8")
-
-    final_html = html_content.replace("VIDEO_BASE64", video_base64)
-    components.html(final_html, height=700, scrolling=True)
-
-    # --- Componentes Utilizados ---
-    st.subheader("Componentes Utilizados")
-
-    # Atuador Normalizado
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        html_path = "./html/AtuadorNormalizado.html"
-        with open(html_path, "r", encoding="utf-8") as f:
-            html_content = f.read()
-        components.html(html_content, height=400, scrolling=False)
-    with col2:
-        st.markdown("""
-        ### Atuador Normalizado — DSNU-20-100-PPV-A  
-        Cilindro pneumático de alta precisão utilizado para realizar o movimento linear.  
-        É o principal componente físico monitorado pelo gêmeo digital.  
-        [Mais detalhes](https://www.festo.com/br/pt/a/19239/?q=dsnu%7E%3AsortByCoreRangeAndNewProduct)
-        """)
-
-    st.markdown("---")
-
-    # Sensor de Proximidade
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        html_path = "./html/SensorProximidade.html"
-        with open(html_path, "r", encoding="utf-8") as f:
-            html_content = f.read()
-        components.html(html_content, height=400, scrolling=False)
-    with col2:
-        st.markdown("""
-        ### Sensor de Proximidade — SME-8M-DS-24V-K-2,5-OE  
-        Detecta a posição do êmbolo no interior do atuador, fornecendo feedback contínuo sobre o deslocamento.  
-        Esses dados alimentam os algoritmos de **Machine Learning**, que distinguem estados normais e anômalos.  
-        [Mais detalhes](https://www.festo.com/br/pt/a/543862/?q=SME+8M%7E%3AsortByCoreRangeAndNewProduct)
-        """)
-
-    st.markdown("---")
-
-    # Válvula Solenoide
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        html_path = "./html/ValvulaSolenoide.html"
-        with open(html_path, "r", encoding="utf-8") as f:
-            html_content = f.read()
-        components.html(html_content, height=400, scrolling=False)
-    with col2:
-        st.markdown("""
-        ### Válvula Solenoide — VUVG-L10-B52-T-M5-1P3  
-        Responsável pelo controle preciso do fluxo de ar comprimido que aciona o atuador.  
-        Seu papel é garantir que os movimentos sejam realizados com exatidão, integrando-se ao sistema de monitoramento digital.  
-        [Mais detalhes](https://www.festo.com/br/pt/a/566458/?q=VUVG+L10+B52+T+M5+1P3%7E%3AfestoSortOrderScored)
-        """)
+   """
+   # substitui VIDEO_BASE64 pelo vídeo real
+   video_path = "C:/Users/Cleo Leal/Downloads/geminicode-main/video/VideoAtuador.mp4"
+   with open(video_path, "rb") as f:
+       video_bytes = f.read()
+   video_base64 = base64.b64encode(video_bytes).decode("utf-8")
+   final_html = html_content.replace("VIDEO_BASE64", video_base64)
+   components.html(final_html, height=1000  , scrolling=False)   # --- Componentes Utilizados ---
+   st.subheader("Componentes Utilizados")
+   # Atuador Normalizado
+   col1, col2 = st.columns([1, 2])
+   with col1:
+       html_path = "./html/AtuadorNormalizado.html"
+       with open(html_path, "r", encoding="utf-8") as f:
+           html_content = f.read()
+       components.html(html_content, height=350, scrolling=False)
+   with col2:
+       st.markdown("""
+       ### Atuador Normalizado — DSNU-20-100-PPV-A  
+       Cilindro pneumático de alta precisão utilizado para realizar o movimento linear.  
+       É o principal componente físico monitorado pelo gêmeo digital.  
+       [Mais detalhes](https://www.festo.com/br/pt/a/19239/?q=dsnu%7E%3AsortByCoreRangeAndNewProduct)
+       """)
+   st.markdown("---")
+   # Sensor de Proximidade
+   col1, col2 = st.columns([1, 2])
+   with col1:
+       html_path = "./html/SensorProximidade.html"
+       with open(html_path, "r", encoding="utf-8") as f:
+           html_content = f.read()
+       components.html(html_content, height=350, scrolling=False)
+   with col2:
+       st.markdown("""
+       ### Sensor de Proximidade — SME-8M-DS-24V-K-2,5-OE  
+       Detecta a posição do êmbolo no interior do atuador, fornecendo feedback contínuo sobre o deslocamento.  
+       Esses dados alimentam os algoritmos de **Machine Learning**, que distinguem estados normais e anômalos.  
+       [Mais detalhes](https://www.festo.com/br/pt/a/543862/?q=SME+8M%7E%3AsortByCoreRangeAndNewProduct)
+       """)
+   st.markdown("---")
+   # Válvula Solenoide
+   col1, col2 = st.columns([1, 2])
+   with col1:
+       html_path = "./html/ValvulaSolenoide.html"
+       with open(html_path, "r", encoding="utf-8") as f:
+           html_content = f.read()
+       components.html(html_content, height=350, scrolling=False)
+   with col2:
+       st.markdown("""
+       ### Válvula Solenoide — VUVG-L10-B52-T-M5-1P3  
+       Responsável pelo controle preciso do fluxo de ar comprimido que aciona o atuador.  
+       Seu papel é garantir que os movimentos sejam realizados com exatidão, integrando-se ao sistema de monitoramento digital.  
+       [Mais detalhes](https://www.festo.com/br/pt/a/566458/?q=VUVG+L10+B52+T+M5+1P3%7E%3AfestoSortOrderScored)
+       """)
+   st.markdown("---")
+   # --- Impacto e Benefícios ---
+   st.subheader("Impacto e Benefícios do Projeto")
+   st.markdown("""
+   Nosso gêmeo digital traz vantagens significativas para a automação industrial, unindo confiabilidade operacional, eficiência energética e inteligência de dados:
+               
+✅ Manutenção preditiva e redução de falhas — ao identificar padrões de funcionamento e prever possíveis anomalias, o sistema minimiza paradas não planejadas, aumenta a vida útil dos componentes e reduz custos com manutenção corretiva.
+               
+✅ Eficiência energética otimizada — o monitoramento contínuo garante que o uso de ar comprimido seja feito de forma precisa e controlada, evitando desperdícios e contribuindo para práticas mais sustentáveis na indústria.
+               
+✅ Integração físico-digital inteligente — a conexão entre sensores, atuadores e ambiente digital possibilita uma visão completa do processo em tempo real, permitindo ajustes rápidos e decisões baseadas em dados concretos.
+               
+✅ Apoio estratégico à tomada de decisão — com dashboards interativos e intuitivos, gestores e operadores têm acesso a informações claras, facilitando a análise de desempenho e o planejamento de melhorias contínuas.
+               
+✅ Escalabilidade e inovação — a solução pode ser expandida e adaptada a diferentes cenários industriais, mostrando o potencial da aplicação de gêmeos digitais como parte do futuro da Indústria 4.0.
+   """)
