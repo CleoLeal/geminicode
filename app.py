@@ -387,7 +387,7 @@ Seu navegador não suporta vídeo.
 """
 
     # substitui VIDEO_BASE64 pelo vídeo real
-    video_path = "C:/Users/Cleo Leal/Downloads/geminicode-main/video/VideoAtuador.mp4"
+    video_path = ".html/VideoAtuador.mp4"
     with open(video_path, "rb") as f:
         video_bytes = f.read()
     video_base64 = base64.b64encode(video_bytes).decode("utf-8")
