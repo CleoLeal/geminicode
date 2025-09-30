@@ -148,30 +148,30 @@ with tab1:
 
             fig = go.Figure()
 
-            # Linha roxa arredondada
+            # Linha azul arredondada
             fig.add_trace(go.Scatter(
                 x=dados_plot["timestamp"],
                 y=dados_plot["velocidade"],
                 mode="lines",
-                line=dict(shape="spline", smoothing=1.3, color="purple", width=3),
-                showlegend=False
+                line=dict(color="#787878", width=3),  # cor corrigida
+                line_shape="spline"  # curva spline
             ))
 
-            # Bolinhas Normal (azul)
+            # Bolinhas Normal (cinza escuro)
             fig.add_trace(go.Scatter(
                 x=dados_plot[dados_plot["status"] == "Normal"]["timestamp"],
                 y=dados_plot[dados_plot["status"] == "Normal"]["velocidade"],
                 mode="markers",
-                marker=dict(color="#1E90FF", size=10),
+                marker=dict(color="#416cd1", size=10),  # cor corrigida
                 name="Normal"
             ))
 
-            # Bolinhas Anômalo (turquesa)
+            # Bolinhas Anômalo (amarelo)
             fig.add_trace(go.Scatter(
                 x=dados_plot[dados_plot["status"] == "Anômalo"]["timestamp"],
                 y=dados_plot[dados_plot["status"] == "Anômalo"]["velocidade"],
                 mode="markers",
-                marker=dict(color="#00CED1", size=10),
+                marker=dict(color="#f1e500", size=10),  # cor corrigida
                 name="Anômalo"
             ))
 
@@ -202,24 +202,44 @@ with tab1:
     elif not st.session_state.dados_reais.empty:
         dados_plot = st.session_state.dados_reais.tail(30)
         fig = go.Figure()
+
+        # Linha de tendência
         fig.add_trace(go.Scatter(
             x=dados_plot["timestamp"],
             y=dados_plot["velocidade"],
             mode="lines",
-            line=dict(color="royalblue"),
+            line=dict(color="#787878"),
+            line_shape="spline"
         ))
-        color_map = dados_plot["status"].map({"Normal": "#1E90FF", "Anômalo": "#00CED1"}).tolist()
+
+        # Bolinhas Normal
         fig.add_trace(go.Scatter(
-            x=dados_plot["timestamp"],
-            y=dados_plot["velocidade"],
+            x=dados_plot[dados_plot["status"] == "Normal"]["timestamp"],
+            y=dados_plot[dados_plot["status"] == "Normal"]["velocidade"],
             mode="markers",
-            marker=dict(color=color_map, size=10),
+            marker=dict(color="#416cd1", size=10),
+            name="Normal"
         ))
+
+        # Bolinhas Anomalia
+        fig.add_trace(go.Scatter(
+            x=dados_plot[dados_plot["status"] == "Anômalo"]["timestamp"],
+            y=dados_plot[dados_plot["status"] == "Anômalo"]["velocidade"],
+            mode="markers",
+            marker=dict(color="#f1e500", size=10),
+            name="Anomalia"
+        ))
+
+        # Linhas de referência
         fig.add_hline(y=limite_inferior, line=dict(color="gray", dash="dash"))
         fig.add_hline(y=ideal, line=dict(color="black", dash="dot"))
         fig.add_hline(y=limite_superior, line=dict(color="gray", dash="dash"))
+
         placeholder.plotly_chart(fig, use_container_width=True)
 
+# --------------------------
+# 📊 Aba 2 — Estatísticas
+# --------------------------
 # --------------------------
 # 📊 Aba 2 — Estatísticas
 # --------------------------
@@ -236,82 +256,62 @@ with tab2:
         pct_normais = (normais / total) * 100 if total > 0 else 0
         pct_anomalias = (anomalias / total) * 100 if total > 0 else 0
 
-        st.markdown("""
-        <style>
-        .card {
-            background: #2c2f38;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            height: 130px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .card h4 {
-            color: white;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        .card h2 {
-            font-size: 26px;
-            margin: 0;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
         col1, col2, col3, col4, col5 = st.columns(5)
 
+        # Métricas com números grandes
         col1.markdown(f"""
-        <div class="card">
-            <h4>Média Velocidade</h4>
-            <h2 style="color:#1E90FF;">{media:.4f}</h2>
+        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
+            <div style="font-size:18px; color:#ffffff;">Média Velocidade</div>
+            <div style="font-size:42px; color:#416cd1; font-weight:bold;">{media:.4f}</div>
         </div>
         """, unsafe_allow_html=True)
 
         col2.markdown(f"""
-        <div class="card">
-            <h4>Desvio Padrão</h4>
-            <h2 style="color:#00CED1;">{desvio:.4f}</h2>
+        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
+            <div style="font-size:18px; color:#ffffff;">Desvio Padrão</div>
+            <div style="font-size:42px; color:#f1e500; font-weight:bold;">{desvio:.4f}</div>
         </div>
         """, unsafe_allow_html=True)
 
         col3.markdown(f"""
-        <div class="card">
-            <h4>Total Registros</h4>
-            <h2 style="color:#4FC3F7;">{total}</h2>
+        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
+            <div style="font-size:18px; color:#ffffff;">Total Registros</div>
+            <div style="font-size:42px; color:#4FC3F7; font-weight:bold;">{total}</div>
         </div>
         """, unsafe_allow_html=True)
 
         col4.markdown(f"""
-        <div class="card">
-            <h4>Percentual Normais</h4>
-            <h2 style="color:#1E90FF;">{pct_normais:.1f}%</h2>
+        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
+            <div style="font-size:18px; color:#ffffff;">Percentual Normais</div>
+            <div style="font-size:42px; color:#416cd1; font-weight:bold;">{pct_normais:.1f}%</div>
         </div>
         """, unsafe_allow_html=True)
 
         col5.markdown(f"""
-        <div class="card">
-            <h4>Percentual Anômalos</h4>
-            <h2 style="color:#00CED1;">{pct_anomalias:.1f}%</h2>
+        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
+            <div style="font-size:18px; color:#ffffff;">Percentual Anômalos</div>
+            <div style="font-size:42px; color:#f1e500; font-weight:bold;">{pct_anomalias:.1f}%</div>
         </div>
         """, unsafe_allow_html=True)
 
+        # Histograma de Velocidades
         st.subheader("Distribuição das Velocidades")
         hist = px.histogram(
             dados, x="velocidade", color="status", nbins=20,
-            barmode="overlay", color_discrete_map={"Normal": "#1E90FF", "Anômalo": "#00CED1"}
+            barmode="overlay", color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
         )
         st.plotly_chart(hist, use_container_width=True)
 
+        # Proporção de Status
         st.subheader("Proporção de Status")
         pie = px.pie(
             dados, names="status", hole=0.4,
-            color="status", color_discrete_map={"Normal": "#1E90FF", "Anômalo": "#00CED1"}
+            color="status", color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
         )
         st.plotly_chart(pie, use_container_width=True)
     else:
         st.info("Nenhum dado registrado ainda. Inicie a simulação na aba Tempo Real.")
+
 
 # --------------------------
 # 📄 Aba 3 — Sobre / GeminiCode
@@ -328,7 +328,7 @@ with tab3:
     font-family: 'Poppins', sans-serif;
 }
 .section h2 {
-    color: #1E90FF;
+    color: #416cd1ff;
     margin-bottom: 12px;
     font-size: 30px;
     font-weight: bold;
@@ -346,7 +346,7 @@ with tab3:
     box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
 }
 a {
-    color: #00CED1;
+    color: #f1e500ff;
     text-decoration: none;
     font-weight: bold;
 }
