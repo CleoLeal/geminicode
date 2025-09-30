@@ -1,9 +1,15 @@
-#importações
 import pandas as pd
-#função para carregar o dataset
-def carregar_dataset(path="../assets/dataset_velocidade_v2.xlsx"):
-    df = pd.read_excel(path)
-    df['movimento'] = df['movimento'].astype(str)
-    return df
+import os
 
-print("Carregado com sucesso")
+def carregar_dataset():
+    # caminho correto considerando que assets está fora de app
+    path = os.path.join(os.path.dirname(__file__), "..", "assets", "dataset_velocidade_v2.xlsx")
+    
+    # converte para caminho absoluto
+    path = os.path.abspath(path)
+    
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Arquivo não encontrado: {path}")
+    
+    df = pd.read_excel(path)
+    return df
