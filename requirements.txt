@@ -1,8 +1,7 @@
-dash
+streamlit
 pandas
+numpy
 scikit-learn
 plotly
 openpyxl
 gunicorn
-numpy
-dash-daq
