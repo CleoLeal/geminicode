@@ -1,12 +1,14 @@
-#importações
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
 import os
 
-# Caminhos fixos
-HTML_DIR = "../assets/html"
-VIDEO_PATH = "../assets/VideoAtuador.mp4"
+# Caminho absoluto da pasta atual do script geminicode.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Caminhos para HTML e vídeo
+HTML_DIR = os.path.join(BASE_DIR, "..", "..", "assets", "html")
+VIDEO_PATH = os.path.join(BASE_DIR, "..", "..", "assets", "VideoAtuador.mp4")
 
 def render():
     st.header("Projeto GeminiCode")
@@ -78,7 +80,7 @@ Seu navegador não suporta vídeo.
 </div>
 """
 
-    # substitui VIDEO_BASE64 pelo vídeo real
+    # Substitui VIDEO_BASE64 pelo vídeo real
     with open(VIDEO_PATH, "rb") as f:
         video_bytes = f.read()
     video_base64 = base64.b64encode(video_bytes).decode("utf-8")
