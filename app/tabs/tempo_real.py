@@ -4,13 +4,13 @@ import plotly.graph_objects as go
 import time
 from utils import gerar_dado
 import config
+import pandas as pd
 
 # função principal da aba de monitoramento em tempo real
 def render(df, le, model):
-    # configurações iniciais
     st.header("Monitoramento em Tempo Real")
 
-    #botões de controle
+    # botões de controle
     col1, col2, col3 = st.columns([1, 1, 1])
     iniciar = col1.button("▶️ Iniciar Simulação")
     parar = col2.button("⏹️ Parar Simulação")
@@ -20,31 +20,30 @@ def render(df, le, model):
     if iniciar:
         st.session_state.rodando = True
         st.session_state.aba_ativa = "tempo_real"
-    # para
     if parar:
         st.session_state.rodando = False
         st.session_state.aba_ativa = "estatisticas"
-    # reseta
     if resetar:
         st.session_state.dados_reais = st.session_state.dados_reais.iloc[0:0]
 
-    # cria o dataframe vazio na sessão
     placeholder = st.empty()
 
-    #deixar rodando "infinitamente"
     if st.session_state.rodando:
         for i in range(1000000):
             if not st.session_state.rodando:
                 break
+
             # gera novo dado
-            novo = gerar_dado(i, df, le, model,
-                              config.IDEAL,
-                              config.LIMITE_INFERIOR,
-                              config.LIMITE_SUPERIOR,
-                              st.session_state)
-            # adiciona ao dataframe
-            st.session_state.dados_reais = st.session_state.dados_reais._append(novo, ignore_index=True)
-            dados_plot = st.session_state.dados_reais.tail(30)
+            novo = gerar_dado(i, df, model, le, config.IDEAL, config.LIMITE_INFERIOR, config.LIMITE_SUPERIOR)
+            st.session_state.dados_reais = pd.concat([st.session_state.dados_reais, pd.DataFrame([novo])], ignore_index=True)
+
+            # pega últimos 30 registros para plot
+            dados_plot = st.session_state.dados_reais.tail(30).copy()
+
+            # define status apenas para plotagem baseado nos limites
+            dados_plot['status_plot'] = dados_plot['velocidade'].apply(
+                lambda x: "Normal" if config.LIMITE_INFERIOR <= x <= config.LIMITE_SUPERIOR else "Anômalo"
+            )
 
             # cria o gráfico
             fig = go.Figure()
@@ -60,17 +59,17 @@ def render(df, le, model):
 
             # markers normais
             fig.add_trace(go.Scatter(
-                x=dados_plot[dados_plot["status"] == "Normal"]["timestamp"],
-                y=dados_plot[dados_plot["status"] == "Normal"]["velocidade"],
+                x=dados_plot[dados_plot["status_plot"] == "Normal"]["timestamp"],
+                y=dados_plot[dados_plot["status_plot"] == "Normal"]["velocidade"],
                 mode="markers",
                 marker=dict(color="#416cd1", size=10),
                 name="Normal"
             ))
 
-            # markers anômalas
+            # markers anômalos
             fig.add_trace(go.Scatter(
-                x=dados_plot[dados_plot["status"] == "Anômalo"]["timestamp"],
-                y=dados_plot[dados_plot["status"] == "Anômalo"]["velocidade"],
+                x=dados_plot[dados_plot["status_plot"] == "Anômalo"]["timestamp"],
+                y=dados_plot[dados_plot["status_plot"] == "Anômalo"]["velocidade"],
                 mode="markers",
                 marker=dict(color="#f1e500", size=10),
                 name="Anômalo"
@@ -89,10 +88,11 @@ def render(df, le, model):
 
             # métricas
             total = len(st.session_state.dados_reais)
-            anomalias = (st.session_state.dados_reais['status'] == "Anômalo").sum()
-            normais = (st.session_state.dados_reais['status'] == "Normal").sum()
+            anomalias = (st.session_state.dados_reais['velocidade'] < config.LIMITE_INFERIOR).sum() + \
+                        (st.session_state.dados_reais['velocidade'] > config.LIMITE_SUPERIOR).sum()
+            normais = total - anomalias
 
-            # exibe o gráfico e as métricas
+            # exibe o gráfico e métricas
             with placeholder.container():
                 c1, c2 = st.columns([2, 1])
                 c1.plotly_chart(fig, use_container_width=True)
@@ -101,10 +101,16 @@ def render(df, le, model):
                 c2.metric("Anomalias", anomalias)
 
             time.sleep(0.8)
-            
-    # exibe o gráfico estático quando não está rodando
+
     elif not st.session_state.dados_reais.empty:
-        dados_plot = st.session_state.dados_reais.tail(30)
+        # gráfico estático quando não está rodando
+        dados_plot = st.session_state.dados_reais.tail(30).copy()
+
+        # define status apenas para plotagem
+        dados_plot['status_plot'] = dados_plot['velocidade'].apply(
+            lambda x: "Normal" if config.LIMITE_INFERIOR <= x <= config.LIMITE_SUPERIOR else "Anômalo"
+        )
+
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
@@ -116,16 +122,16 @@ def render(df, le, model):
         ))
 
         fig.add_trace(go.Scatter(
-            x=dados_plot[dados_plot["status"] == "Normal"]["timestamp"],
-            y=dados_plot[dados_plot["status"] == "Normal"]["velocidade"],
+            x=dados_plot[dados_plot["status_plot"] == "Normal"]["timestamp"],
+            y=dados_plot[dados_plot["status_plot"] == "Normal"]["velocidade"],
             mode="markers",
             marker=dict(color="#416cd1", size=10),
             name="Normal"
         ))
 
         fig.add_trace(go.Scatter(
-            x=dados_plot[dados_plot["status"] == "Anômalo"]["timestamp"],
-            y=dados_plot[dados_plot["status"] == "Anômalo"]["velocidade"],
+            x=dados_plot[dados_plot["status_plot"] == "Anômalo"]["timestamp"],
+            y=dados_plot[dados_plot["status_plot"] == "Anômalo"]["velocidade"],
             mode="markers",
             marker=dict(color="#f1e500", size=10),
             name="Anômalo"

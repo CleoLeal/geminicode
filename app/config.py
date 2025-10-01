@@ -2,7 +2,7 @@
 import math
 
 # Parâmetros fixos
-IDEAL = 0.08
+IDEAL = 0.71
 MARGEM = 0.05
 LIMITE_INFERIOR = IDEAL * (1 - MARGEM)
 LIMITE_SUPERIOR = IDEAL * (1 + MARGEM)

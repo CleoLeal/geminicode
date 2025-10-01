@@ -15,7 +15,7 @@ def render():
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
     .section {
-        margin-bottom: 40px;
+        margin-bottom: 20px;
         font-family: 'Poppins', sans-serif;
     }
     .section h2 {
@@ -35,8 +35,8 @@ def render():
         padding: 20px;
         margin: 15px 0;
         box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
-        overflow: visible;  /* Permite que o conteúdo expanda sem scroll */
-        max-height: none;   /* Sem limite de altura */
+        overflow: visible;  
+        max-height: none;  
     }
     a {
         color: #f1e500ff;
@@ -65,7 +65,7 @@ def render():
         </div>
     </div>
     """
-    components.html(html_contexto, height=600, scrolling=True)
+    components.html(html_contexto, height=500, scrolling=True)
 
 
     # --- Vídeo ---

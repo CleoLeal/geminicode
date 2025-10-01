@@ -1,15 +1,22 @@
 import streamlit as st
 import plotly.express as px
+import config  
 
 def render():
     st.header("Estatísticas Acumuladas")
     
     if len(st.session_state.dados_reais) > 0:
         dados = st.session_state.dados_reais.copy()
+        
+        # Define status para estatísticas baseado nos limites
+        dados['status_calc'] = dados['velocidade'].apply(
+            lambda x: "Normal" if config.LIMITE_INFERIOR <= x <= config.LIMITE_SUPERIOR else "Anômalo"
+        )
+
         media = dados['velocidade'].mean()
         desvio = dados['velocidade'].std()
-        normais = (dados['status'] == "Normal").sum()
-        anomalias = (dados['status'] == "Anômalo").sum()
+        normais = (dados['status_calc'] == "Normal").sum()
+        anomalias = (dados['status_calc'] == "Anômalo").sum()
         total = len(dados)
         pct_normais = (normais / total) * 100 if total > 0 else 0
         pct_anomalias = (anomalias / total) * 100 if total > 0 else 0
@@ -22,8 +29,10 @@ def render():
             ("Percentual Anômalos", f"{pct_anomalias:.1f}%", "#f1e500")
         ]
 
-        for label, value, color in cards:
-            st.markdown(f"""
+        # Divide os cards em colunas (5 cards -> 5 colunas)
+        cols = st.columns(len(cards))
+        for col, (label, value, color) in zip(cols, cards):
+            col.markdown(f"""
             <div style="
                 background:#2c2f38;
                 padding:20px;
@@ -39,7 +48,7 @@ def render():
         # Histograma de velocidades
         st.subheader("Distribuição das Velocidades")
         hist = px.histogram(
-            dados, x="velocidade", color="status", nbins=20,
+            dados, x="velocidade", color="status_calc", nbins=20,
             barmode="overlay",
             color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
         )
@@ -48,8 +57,8 @@ def render():
         # Pizza da proporção de status
         st.subheader("Proporção de Status")
         pie = px.pie(
-            dados, names="status", hole=0.4,
-            color="status",
+            dados, names="status_calc", hole=0.4,
+            color="status_calc",
             color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
         )
         st.plotly_chart(pie, use_container_width=True)
