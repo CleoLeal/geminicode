@@ -1,12 +1,9 @@
-#importações 
 import streamlit as st
 import plotly.express as px
 
-# função para renderizar a aba de estatísticas
 def render():
     st.header("Estatísticas Acumuladas")
     
-    # verifica se há dados reais armazenados
     if len(st.session_state.dados_reais) > 0:
         dados = st.session_state.dados_reais.copy()
         media = dados['velocidade'].mean()
@@ -17,56 +14,45 @@ def render():
         pct_normais = (normais / total) * 100 if total > 0 else 0
         pct_anomalias = (anomalias / total) * 100 if total > 0 else 0
 
-        col1, col2, col3, col4, col5 = st.columns(5)
+        cards = [
+            ("Média Velocidade", f"{media:.4f}", "#416cd1"),
+            ("Desvio Padrão", f"{desvio:.4f}", "#f1e500"),
+            ("Total Registros", f"{total}", "#4FC3F7"),
+            ("Percentual Normais", f"{pct_normais:.1f}%", "#416cd1"),
+            ("Percentual Anômalos", f"{pct_anomalias:.1f}%", "#f1e500")
+        ]
 
-        # Métricas com números grandes
-        col1.markdown(f"""
-        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
-            <div style="font-size:18px; color:#ffffff;">Média Velocidade</div>
-            <div style="font-size:42px; color:#416cd1; font-weight:bold;">{media:.4f}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        for label, value, color in cards:
+            st.markdown(f"""
+            <div style="
+                background:#2c2f38;
+                padding:20px;
+                margin-bottom:12px;
+                border-radius:15px;
+                text-align:center;
+            ">
+                <div style="font-size:16px; color:#ffffff;">{label}</div>
+                <div style="font-size:38px; color:{color}; font-weight:bold;">{value}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        col2.markdown(f"""
-        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
-            <div style="font-size:18px; color:#ffffff;">Desvio Padrão</div>
-            <div style="font-size:42px; color:#f1e500; font-weight:bold;">{desvio:.4f}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col3.markdown(f"""
-        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
-            <div style="font-size:18px; color:#ffffff;">Total Registros</div>
-            <div style="font-size:42px; color:#4FC3F7; font-weight:bold;">{total}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col4.markdown(f"""
-        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
-            <div style="font-size:18px; color:#ffffff;">Percentual Normais</div>
-            <div style="font-size:42px; color:#416cd1; font-weight:bold;">{pct_normais:.1f}%</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col5.markdown(f"""
-        <div style="background:#2c2f38; padding:20px; border-radius:15px; text-align:center;">
-            <div style="font-size:18px; color:#ffffff;">Percentual Anômalos</div>
-            <div style="font-size:42px; color:#f1e500; font-weight:bold;">{pct_anomalias:.1f}%</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        # Histograma de velocidades
         st.subheader("Distribuição das Velocidades")
         hist = px.histogram(
             dados, x="velocidade", color="status", nbins=20,
-            barmode="overlay", color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
+            barmode="overlay",
+            color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
         )
         st.plotly_chart(hist, use_container_width=True)
 
+        # Pizza da proporção de status
         st.subheader("Proporção de Status")
         pie = px.pie(
             dados, names="status", hole=0.4,
-            color="status", color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
+            color="status",
+            color_discrete_map={"Normal": "#416cd1", "Anômalo": "#f1e500"}
         )
         st.plotly_chart(pie, use_container_width=True)
+
     else:
         st.info("Nenhum dado registrado ainda. Inicie a simulação na aba Tempo Real.")
