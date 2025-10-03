@@ -5,7 +5,8 @@ import os
 # --- Caminhos absolutos ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 HTML_DIR = os.path.join(BASE_DIR, "..", "..", "assets", "html")
-VIDEO_PATH = os.path.join(BASE_DIR, "..", "..", "assets", "VideoAtuador.mp4")
+VIDEO_PATH1 = os.path.join(BASE_DIR, "..", "..", "assets", "VideoAtuador.mp4")
+VIDEO_PATH2 = os.path.join(BASE_DIR, "..", "..", "assets", "ColetandoDados.mp4")
 
 def render():
     st.header("Projeto GeminiCode")
@@ -65,12 +66,17 @@ def render():
         </div>
     </div>
     """
-    components.html(html_contexto, height=500, scrolling=True)
+    components.html(html_contexto, height=500)
 
 
     # --- Vídeo ---
-    st.subheader("Demonstração do Protótipo")
-    st.video(VIDEO_PATH, format="video/mp4", start_time=0)
+    col1, col2 = st.columns([2, 2]) 
+    with col1:
+        st.subheader("Demonstração do Protótipo")
+        st.video(VIDEO_PATH1, format="video/mp4", start_time=0)
+    with col2:
+        st.subheader("")
+        st.video(VIDEO_PATH2, format="video/mp4", start_time=0)
 
     # --- Componentes utilizados ---
     st.subheader("Componentes Utilizados")

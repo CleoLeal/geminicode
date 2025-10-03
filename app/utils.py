@@ -20,8 +20,8 @@ def gerar_dado(i, df, model, le, ideal, limite_inferior, limite_superior):
             velocidade = round(random.uniform(limite_superior + 0.001, limite_superior + 0.02), 4)
     else:
         # Valor normal com ruído
-        amplitude = 0.002
-        ruido_max = 0.001
+        amplitude = 0.005
+        ruido_max = 0.002
         velocidade = round(
             ideal + amplitude * math.sin(i * 0.1) + random.uniform(-ruido_max, ruido_max), 4
         )
