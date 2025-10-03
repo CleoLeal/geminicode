@@ -10,7 +10,7 @@ st.set_page_config(page_title=config.PAGE_TITLE, layout=config.LAYOUT)
 # --- Imagem fixa no header ---
 col1, col2, col3 = st.columns([2, 2, 2])  # centraliza na coluna do meio
 with col2:
-    st.image("./logo.png", width=800)
+    st.image("./logo.png")
 
 st.markdown("")
 st.markdown("")
