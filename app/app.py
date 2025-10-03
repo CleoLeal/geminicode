@@ -12,6 +12,10 @@ col1, col2, col3 = st.columns([2, 2, 2])  # centraliza na coluna do meio
 with col2:
     st.image("../assets/img/logo.png", width=800)
 
+st.markdown("")
+st.markdown("")
+st.markdown("")
+
 
 
 # Dataset e modelo
