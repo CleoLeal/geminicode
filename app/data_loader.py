@@ -3,7 +3,7 @@ import os
 
 def carregar_dataset():
     # caminho correto considerando que assets está fora de app
-    path = os.path.join(os.path.dirname(__file__), "..", "assets", "dataset_velocidade_v2.xlsx")
+    path = os.path.join(os.path.dirname(__file__), "dataset_velocidade_v2.xlsx")
     
     # converte para caminho absoluto
     path = os.path.abspath(path)

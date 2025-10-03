@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-
+import os
 def render():
     st.title("Cálculos")
 
@@ -12,7 +12,8 @@ def render():
     """)
     col1, col2 = st.columns([2, 2])  # centraliza na coluna do meio
     with col1:
-        st.image("../assets/img/grafico_documentacao.png", width=700)
+        logo_path = os.path.join(os.path.dirname(__file__), "grafico_documentacao.png")
+        st.image(logo_path, width=500)
     with col2:
         st.info("""
         🔹 Atuador analisado: **DSNU-20-100-PPV-A**  
@@ -48,7 +49,9 @@ def render():
 
     O modelo escolhido foi o **RandomForestClassifier**, que obteve **100% de acurácia**.
     """)
-    df = pd.read_excel("../assets/dataset_velocidade_v2.xlsx")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    excel_path = os.path.join(BASE_DIR,"dataset_velocidade_v2.xlsx")
+    df = pd.read_excel(excel_path)
 
     # Cria uma coluna de medição se não houver
     if "Medição" not in df.columns:

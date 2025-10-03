@@ -3,6 +3,7 @@ import config
 from data_loader import carregar_dataset
 from model import treinar_modelo
 from tabs import tempo_real, estatisticas, geminicode, calculo, home
+import os
 
 # Configuração inicial
 st.set_page_config(page_title=config.PAGE_TITLE, layout=config.LAYOUT)
@@ -10,7 +11,9 @@ st.set_page_config(page_title=config.PAGE_TITLE, layout=config.LAYOUT)
 # --- Imagem fixa no header ---
 col1, col2, col3 = st.columns([2, 2, 2])  # centraliza na coluna do meio
 with col2:
-    st.image("./logo.png")
+    logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
+    st.image(logo_path, width=500)
+
 
 st.markdown("")
 st.markdown("")
