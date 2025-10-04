@@ -1,4 +1,3 @@
-#importações
 import streamlit as st
 import plotly.graph_objects as go
 import time
@@ -8,13 +7,37 @@ import pandas as pd
 
 # função principal da aba de monitoramento em tempo real
 def render(df, le, model):
-    st.header("Monitoramento em Tempo Real")
+    # --- CSS para fonte Poppins ---
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            html, body, [class*="css"] {
+                font-family: 'Poppins', sans-serif !important;
+                color: #e0e0e0;
+            }
+            h1, h2, h3, h4, h5, h6 {
+                font-family: 'Poppins', sans-serif !important;
+                color: #416cd1;
+            }
+            .stMetric-value, .stMetric-label {
+                font-family: 'Poppins', sans-serif !important;
+            }
+            .stMarkdown p {
+                font-family: 'Poppins', sans-serif !important;
+                font-size: 18px;
+                line-height: 1.6;
+            }
+            .stButton button {
+                font-family: 'Poppins', sans-serif !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # botões de controle
+    # --- Botões de controle ---
     col1, col2, col3 = st.columns([1, 1, 1])
-    iniciar = col1.button("▶️ Iniciar Simulação")
-    parar = col2.button("⏹️ Parar Simulação")
-    resetar = col3.button("Resetar Histórico")
+    iniciar = col1.button("▶️ Iniciar simulação")
+    parar = col2.button("⏹️ Parar simulação")
+    resetar = col3.button("🔄 Resetar histórico")
 
     # inicializa
     if iniciar:
@@ -81,9 +104,9 @@ def render(df, le, model):
             fig.add_hline(y=config.LIMITE_SUPERIOR, line=dict(color="gray", dash="dash"))
 
             fig.update_layout(
-                title="Últimos 30 Registros",
+                title="Últimos 30 registros",
                 xaxis_title="Tempo",
-                yaxis_title="Velocidade"
+                yaxis_title="Velocidade (m/s)",
             )
 
             # métricas
@@ -96,7 +119,7 @@ def render(df, le, model):
             with placeholder.container():
                 c1, c2 = st.columns([2, 1])
                 c1.plotly_chart(fig, use_container_width=True)
-                c2.metric("Total Registros", total)
+                c2.metric("Total registros", total)
                 c2.metric("Normais", normais)
                 c2.metric("Anomalias", anomalias)
 
@@ -105,14 +128,11 @@ def render(df, le, model):
     elif not st.session_state.dados_reais.empty:
         # gráfico estático quando não está rodando
         dados_plot = st.session_state.dados_reais.tail(30).copy()
-
-        # define status apenas para plotagem
         dados_plot['status_plot'] = dados_plot['velocidade'].apply(
             lambda x: "Normal" if config.LIMITE_INFERIOR <= x <= config.LIMITE_SUPERIOR else "Anômalo"
         )
 
         fig = go.Figure()
-
         fig.add_trace(go.Scatter(
             x=dados_plot["timestamp"],
             y=dados_plot["velocidade"],
@@ -120,7 +140,6 @@ def render(df, le, model):
             line=dict(color="#787878"),
             line_shape="spline"
         ))
-
         fig.add_trace(go.Scatter(
             x=dados_plot[dados_plot["status_plot"] == "Normal"]["timestamp"],
             y=dados_plot[dados_plot["status_plot"] == "Normal"]["velocidade"],
@@ -128,7 +147,6 @@ def render(df, le, model):
             marker=dict(color="#416cd1", size=10),
             name="Normal"
         ))
-
         fig.add_trace(go.Scatter(
             x=dados_plot[dados_plot["status_plot"] == "Anômalo"]["timestamp"],
             y=dados_plot[dados_plot["status_plot"] == "Anômalo"]["velocidade"],

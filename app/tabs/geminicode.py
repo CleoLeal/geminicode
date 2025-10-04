@@ -5,81 +5,100 @@ import os
 # --- Caminhos absolutos ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 HTML_DIR = os.path.join(BASE_DIR, "..", "..", "assets", "html")
-VIDEO_PATH1 = os.path.join(BASE_DIR, "..", "..", "assets", "VideoAtuador.mp4")
-VIDEO_PATH2 = os.path.join(BASE_DIR, "..", "..", "assets", "ColetandoDados.mp4")
+GIF_PATH1 = os.path.join(BASE_DIR, "..", "..", "assets", "AtuadorGIF.gif")
+GIF_PATH2 = os.path.join(BASE_DIR, "..", "..", "assets", "ColetandoDadosGIF.gif")
 
 def render():
-    st.header("Projeto GeminiCode")
-
-    # --- Texto antes do vídeo ---
-    html_contexto = """
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    st.header("Contexto")
+    # --- CSS Global para responsividade ---
+    st.markdown("""
     <style>
-    .section {
-        margin-bottom: 20px;
-        font-family: 'Poppins', sans-serif;
+    /* Deixa o card ocupar toda a largura no celular */
+    @media (max-width: 768px) {
+        .card {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 15px !important;
+        }
+        .section {
+            padding: 0 !important;
+        }
     }
-    .section h2 {
-        color: #416cd1ff;
-        margin-bottom: 12px;
-        font-size: 30px;
-        font-weight: bold;
-    }
-    .section p {
-        font-size: 20px;
-        line-height: 1.7;
-        color: #e0e0e0;
-    }
-    .card {
-        background: #2c2f38;
-        border-radius: 15px;
-        padding: 20px;
-        margin: 15px 0;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
-        overflow: visible;  
-        max-height: none;  
-    }
-    a {
-        color: #f1e500ff;
-        text-decoration: none;
-        font-weight: bold;
-    }
-    a:hover {
-        text-decoration: underline;
+    /* Remove espaços exagerados */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
     </style>
-    <div class="section">
-        <h2>Contexto do Projeto</h2>
-        <div class="card">
-            <p>
-            Este projeto foi desenvolvido no âmbito da <b>Festo Innovation Challenge CUP 2025</b>,
-            uma iniciativa em parceria entre a <b>FIAP</b> e a <b>Festo</b>, com o objetivo de criar soluções
-            tecnológicas inovadoras voltadas ao <b>desenvolvimento de Digital Twins para monitoramento
-            de sistemas pneumáticos</b>.
-            </p>
-            <p>
-            A proposta buscou explorar o uso de <b>IoT, Inteligência Artificial, Machine Learning,
-            Visão Computacional</b> e a integração com sensores e atuadores industriais.  
-            O foco foi sempre em aplicações práticas, alinhadas à <b>Indústria 4.0</b> e
-            à <b>eficiência energética</b>.
-            </p>
+    """, unsafe_allow_html=True)
+
+    # --- Texto antes do GIF ---
+    st.markdown("""
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+        .section {
+            margin-bottom: 20px;
+            font-family: 'Poppins', sans-serif;
+        }
+        .section h2 {
+            color: #416cd1ff;
+            margin-bottom: 12px;
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .section p:first-child {
+            font-size: 20px; /* novo tamanho */
+            font-weight: 500; /* opcional */
+        }
+        .card {
+            background: #2c2f38;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+            overflow: visible;
+            max-height: none;
+        }
+        a {
+            color: #f1e500ff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        </style>
+
+        <div class="section">
+            <div class="card">
+                <p>
+                Este projeto foi desenvolvido no âmbito da <b>Festo Innovation Challenge CUP 2025</b>,
+                uma iniciativa em parceria entre a <b>FIAP</b> e a <b>Festo</b>, com o objetivo de criar soluções
+                tecnológicas inovadoras voltadas ao <b>desenvolvimento de Digital Twins para monitoramento
+                de sistemas pneumáticos</b>.<br>
+                A proposta buscou explorar o uso de <b>IoT, Inteligência Artificial, Machine Learning,
+                Visão Computacional</b> e a integração com sensores e atuadores industriais.  
+                O foco foi sempre em aplicações práticas, alinhadas à <b>Indústria 4.0</b> e
+                à <b>eficiência energética</b>.
+                </p>
+            </div>
         </div>
-    </div>
-    """
-    components.html(html_contexto, height=500)
+        """, unsafe_allow_html=True)
 
 
-    # --- Vídeo ---
+    # --- GIFs ---
     col1, col2 = st.columns([2, 2]) 
     with col1:
-        st.subheader("Demonstração do Protótipo")
-        st.video(VIDEO_PATH1, format="video/mp4", start_time=0)
+        st.subheader("Demonstração do protótipo")
+        st.image(GIF_PATH1, use_container_width=True)
     with col2:
-        st.subheader("")
-        st.video(VIDEO_PATH2, format="video/mp4", start_time=0)
+        st.subheader("Coleta de dados")
+        st.image(GIF_PATH2, use_container_width=True)
 
     # --- Componentes utilizados ---
-    st.subheader("Componentes Utilizados")
+    st.subheader("Componentes utilizados")
 
     # Atuador Normalizado
     col1, col2 = st.columns([1, 2])
@@ -135,15 +154,73 @@ def render():
         """, unsafe_allow_html=True)
     st.markdown("---")
 
+        # --- Aplicação da família DSNU + Vídeo ---
+    st.markdown("## Aplicação da família de atuadores DSNU")
+
+    col1, col2 = st.columns([2, 2])  # duas colunas lado a lado
+    with col1:
+        VIDEO_PATH = os.path.join(BASE_DIR, "..", "..", "assets", "BionicKangaroo.mp4")
+        if os.path.exists(VIDEO_PATH):
+            st.video(VIDEO_PATH)
+        else:
+            st.info("📹 Vídeo demonstrativo do atuador DSNU em breve...")
+        
+    st.markdown("")
+    st.markdown("---")
+
+
+    with col2:
+        st.markdown("""
+        <div style="font-size:20px; line-height:1.7; font-family:'Poppins', sans-serif; color:#e0e0e0; text-align:justify;">
+        O Atuador Normalizado DSNU-20-100-PPV-A, presente em nosso protótipo, integra a linha de cilindros pneumáticos DSNU da Festo, reconhecida pela robustez e precisão. Embora não seja o mesmo modelo do projeto BionicKangaroo, ambos pertencem a essa família. 
+        <br>No robô, o DSNU foi fundamental para os saltos suaves e controlados do canguru; já no Projeto GeminiCode, atua como “músculo” do sistema, realizando o movimento linear monitorado pelo gêmeo digital. Essa versatilidade mostra como a linha DSNU atende desde aplicações industriais até soluções inovadoras inspiradas na natureza.
+        </div>
+        """, unsafe_allow_html=True)
+
     # Impacto e Benefícios
-    st.subheader("Impacto e Benefícios do Projeto")
     st.markdown("""
-    <div style="font-size:20px; line-height:1.6;">  
-        Nosso gêmeo digital traz vantagens significativas para a automação industrial, unindo confiabilidade operacional, eficiência energética e inteligência de dados:<br><br>
-        ✅ Manutenção preditiva e redução de falhas — ao identificar padrões de funcionamento e prever possíveis anomalias, o sistema minimiza paradas não planejadas, aumenta a vida útil dos componentes e reduz custos com manutenção corretiva.<br><br>
-        ✅ Eficiência energética otimizada — o monitoramento contínuo garante que o uso de ar comprimido seja feito de forma precisa e controlada, evitando desperdícios e contribuindo para práticas mais sustentáveis na indústria.<br><br>
-        ✅ Integração físico-digital inteligente — a conexão entre sensores, atuadores e ambiente digital possibilita uma visão completa do processo em tempo real, permitindo ajustes rápidos e decisões baseadas em dados concretos.<br><br>
-        ✅ Apoio estratégico à tomada de decisão — com dashboards interativos e intuitivos, gestores e operadores têm acesso a informações claras, facilitando a análise de desempenho e o planejamento de melhorias contínuas.<br><br>
-        ✅ Escalabilidade e inovação — a solução pode ser expandida e adaptada a diferentes cenários industriais, mostrando o potencial da aplicação de gêmeos digitais como parte do futuro da Indústria 4.0.
+    <style>
+        .benefits-container {
+            background-color: #2c2f38;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+            font-family: 'Poppins', sans-serif;
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .benefits-container h3 {
+            color: #f1e500;
+            font-size: 26px;
+            margin-bottom: 15px;
+        }
+        .benefits-container p {
+            font-size: 20px;
+            line-height: 1.7;
+        }
+        .benefits-container ul {
+            padding-left: 20px;
+            font-size: 20px;
+            line-height: 1.7;
+        }
+        .benefits-container li {
+            margin-bottom: 15px;
+        }
+    </style>
+
+    <div class="benefits-container">
+        <h3>Impacto e benefícios do projeto</h3>
+        <p>
+        Nosso gêmeo digital impulsiona a automação industrial com <b>confiabilidade</b>, <b>eficiência</b> e <b>inteligência de dados</b>.
+        </p>
+        <ul>
+            <li><b>Manutenção preditiva</b> – Antecipação de falhas, menos paradas e maior vida útil dos componentes.</li>
+            <li><b>Eficiência energética</b> – Uso racional do ar comprimido e redução de desperdícios.</li>
+            <li><b>Integração físico-digital</b> – Monitoramento em tempo real e decisões baseadas em dados.</li>
+            <li><b>Suporte estratégico</b> – Dashboards interativos para análises rápidas e precisas.</li>
+            <li><b>Escalabilidade</b> – Flexível para diferentes aplicações na Indústria 4.0.</li>
+        </ul>
     </div>
+
     """, unsafe_allow_html=True)
+

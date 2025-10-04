@@ -3,7 +3,7 @@ import plotly.express as px
 import config  
 
 def render():
-    st.header("Estatísticas Acumuladas")
+    st.header("Estatísticas acumuladas")
     
     if len(st.session_state.dados_reais) > 0:
         dados = st.session_state.dados_reais.copy()
@@ -22,11 +22,11 @@ def render():
         pct_anomalias = (anomalias / total) * 100 if total > 0 else 0
 
         cards = [
-            ("Média Velocidade", f"{media:.4f}", "#416cd1"),
-            ("Desvio Padrão", f"{desvio:.4f}", "#f1e500"),
-            ("Total Registros", f"{total}", "#4FC3F7"),
-            ("Percentual Normais", f"{pct_normais:.1f}%", "#416cd1"),
-            ("Percentual Anômalos", f"{pct_anomalias:.1f}%", "#f1e500")
+            ("Média velocidade", f"{media:.4f}", "#416cd1"),
+            ("Desvio padrão", f"{desvio:.4f}", "#f1e500"),
+            ("Total registros", f"{total}", "#4FC3F7"),
+            ("Percentual normais", f"{pct_normais:.1f}%", "#416cd1"),
+            ("Percentual anômalos", f"{pct_anomalias:.1f}%", "#f1e500")
         ]
 
         # Divide os cards em colunas (5 cards -> 5 colunas)
@@ -46,7 +46,7 @@ def render():
             """, unsafe_allow_html=True)
 
         # Histograma de velocidades
-        st.subheader("Distribuição das Velocidades")
+        st.subheader("Distribuição das velocidades")
         hist = px.histogram(
             dados, x="velocidade", color="status_calc", nbins=20,
             barmode="overlay",
@@ -55,7 +55,7 @@ def render():
         st.plotly_chart(hist, use_container_width=True)
 
         # Pizza da proporção de status
-        st.subheader("Proporção de Status")
+        st.subheader("Proporção de status")
         pie = px.pie(
             dados, names="status_calc", hole=0.4,
             color="status_calc",
@@ -64,4 +64,4 @@ def render():
         st.plotly_chart(pie, use_container_width=True)
 
     else:
-        st.info("Nenhum dado registrado ainda. Inicie a simulação na aba Tempo Real.")
+        st.info("Nenhum dado registrado ainda. Inicie a simulação na aba Simulação.")
