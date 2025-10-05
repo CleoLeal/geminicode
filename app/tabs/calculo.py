@@ -100,7 +100,7 @@ def render():
 
     st.subheader("Histórico das velocidades")
     if df['flag'].dtype != object:  
-        df['status'] = df['flag'].apply(lambda x: "Normal" if x == 0 else "Anômalo")
+        df['status'] = df['flag'].apply(lambda x: "Anômalo" if x == 0 else "Normal")
     else:  
         df['status'] = df['flag']
 
