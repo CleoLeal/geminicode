@@ -78,8 +78,7 @@ def render():
                 uma iniciativa em parceria entre a <b>FIAP</b> e a <b>Festo</b>, com o objetivo de criar soluções
                 tecnológicas inovadoras voltadas ao <b>desenvolvimento de Digital Twins para monitoramento
                 de sistemas pneumáticos</b>.<br>
-                A proposta buscou explorar o uso de <b>IoT, Inteligência Artificial, Machine Learning,
-                Visão Computacional</b> e a integração com sensores e atuadores industriais.  
+                A proposta buscou explorar o uso de <b>IoT, Machine Learning, Visão Computacional</b> e a integração com sensores e atuadores industriais.  
                 O foco foi sempre em aplicações práticas, alinhadas à <b>Indústria 4.0</b> e
                 à <b>eficiência energética</b>.
                 </p>
