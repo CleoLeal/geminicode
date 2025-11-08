@@ -56,8 +56,8 @@ def render():
 
     # --- Resultados calculados ---
     velocidade_media = 0.057
-    limite_inferior = 0.054
-    limite_superior = 0.059
+    limite_inferior = 0.050
+    limite_superior = 0.067
 
     st.subheader("Resultados dos cálculos")
     col1, col2, col3 = st.columns(3)
@@ -66,7 +66,7 @@ def render():
     col3.metric("Limite Superior", f"{limite_superior} m/s")
 
     st.markdown("""
-    ✅ Consideramos uma margem de erro de 5%. Caso a velocidade se mantenha **dentro dos limites** mínimo e máximo estabelecidos, o atuador será classificado como **Normal**.  
+    ✅ Consideramos uma margem de erro de 15%. Caso a velocidade se mantenha **dentro dos limites** mínimo e máximo estabelecidos, o atuador será classificado como **Normal**.  
     ⚠️ Caso contrário, será classificado como **Anômalo**.
     """)
     st.markdown("")
